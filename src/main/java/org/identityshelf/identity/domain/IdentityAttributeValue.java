@@ -1,0 +1,239 @@
+package org.identityshelf.identity.domain;
+
+import jakarta.persistence.*;
+import java.time.OffsetDateTime;
+
+@Entity
+@Table(name = "identity_attribute_values")
+public class IdentityAttributeValue {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "identity_id", nullable = false)
+    private Identity identity;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_type_id", nullable = false)
+    private AttributeType attributeType;
+    
+    @Column(name = "string_value")
+    private String stringValue;
+    
+    @Column(name = "integer_value")
+    private Long integerValue;
+    
+    @Column(name = "decimal_value")
+    private Double decimalValue;
+    
+    @Column(name = "boolean_value")
+    private Boolean booleanValue;
+    
+    @Column(name = "date_value")
+    private OffsetDateTime dateValue;
+    
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+    
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+    
+    // JPA lifecycle methods
+    @PrePersist
+    protected void onCreate() {
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
+    
+    // Constructors
+    public IdentityAttributeValue() {}
+    
+    public IdentityAttributeValue(Identity identity, AttributeType attributeType) {
+        this.identity = identity;
+        this.attributeType = attributeType;
+    }
+    
+    // Getters and Setters
+    public String getId() {
+        return id;
+    }
+    
+    public void setId(String id) {
+        this.id = id;
+    }
+    
+    public Identity getIdentity() {
+        return identity;
+    }
+    
+    public void setIdentity(Identity identity) {
+        this.identity = identity;
+    }
+    
+    public AttributeType getAttributeType() {
+        return attributeType;
+    }
+    
+    public void setAttributeType(AttributeType attributeType) {
+        this.attributeType = attributeType;
+    }
+    
+    public String getStringValue() {
+        return stringValue;
+    }
+    
+    public void setStringValue(String stringValue) {
+        this.stringValue = stringValue;
+    }
+    
+    public Long getIntegerValue() {
+        return integerValue;
+    }
+    
+    public void setIntegerValue(Long integerValue) {
+        this.integerValue = integerValue;
+    }
+    
+    public Double getDecimalValue() {
+        return decimalValue;
+    }
+    
+    public void setDecimalValue(Double decimalValue) {
+        this.decimalValue = decimalValue;
+    }
+    
+    public Boolean getBooleanValue() {
+        return booleanValue;
+    }
+    
+    public void setBooleanValue(Boolean booleanValue) {
+        this.booleanValue = booleanValue;
+    }
+    
+    public OffsetDateTime getDateValue() {
+        return dateValue;
+    }
+    
+    public void setDateValue(OffsetDateTime dateValue) {
+        this.dateValue = dateValue;
+    }
+    
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
+    // Helper method to get the appropriate value based on data type
+    public Object getValue() {
+        if (attributeType == null) {
+            return null;
+        }
+        
+        switch (attributeType.getDataType()) {
+            case STRING:
+            case EMAIL:
+            case PHONE:
+            case URL:
+            case SELECT:
+            case MULTI_SELECT:
+                return stringValue;
+            case INTEGER:
+                return integerValue;
+            case DECIMAL:
+                return decimalValue;
+            case BOOLEAN:
+                return booleanValue;
+            case DATE:
+            case DATETIME:
+                return dateValue;
+            default:
+                return stringValue;
+        }
+    }
+    
+    // Helper method to set the appropriate value based on data type
+    public void setValue(Object value) {
+        if (attributeType == null) {
+            return;
+        }
+        
+        switch (attributeType.getDataType()) {
+            case STRING:
+            case EMAIL:
+            case PHONE:
+            case URL:
+            case SELECT:
+            case MULTI_SELECT:
+                this.stringValue = value != null ? value.toString() : null;
+                break;
+            case INTEGER:
+                if (value instanceof Number) {
+                    this.integerValue = ((Number) value).longValue();
+                } else if (value instanceof String) {
+                    try {
+                        this.integerValue = Long.parseLong((String) value);
+                    } catch (NumberFormatException e) {
+                        this.integerValue = null;
+                    }
+                } else {
+                    this.integerValue = null;
+                }
+                break;
+            case DECIMAL:
+                if (value instanceof Number) {
+                    this.decimalValue = ((Number) value).doubleValue();
+                } else if (value instanceof String) {
+                    try {
+                        this.decimalValue = Double.parseDouble((String) value);
+                    } catch (NumberFormatException e) {
+                        this.decimalValue = null;
+                    }
+                } else {
+                    this.decimalValue = null;
+                }
+                break;
+            case BOOLEAN:
+                if (value instanceof Boolean) {
+                    this.booleanValue = (Boolean) value;
+                } else if (value instanceof String) {
+                    this.booleanValue = Boolean.parseBoolean((String) value);
+                } else {
+                    this.booleanValue = null;
+                }
+                break;
+            case DATE:
+            case DATETIME:
+                if (value instanceof OffsetDateTime) {
+                    this.dateValue = (OffsetDateTime) value;
+                } else if (value instanceof String) {
+                    // Simple parsing - in production you'd want more robust date parsing
+                    try {
+                        this.dateValue = OffsetDateTime.parse((String) value);
+                    } catch (Exception e) {
+                        this.dateValue = null;
+                    }
+                } else {
+                    this.dateValue = null;
+                }
+                break;
+        }
+    }
+}

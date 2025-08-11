@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: identityshelf-postgres
+    environment:
+      POSTGRES_DB: identityshelf
+      POSTGRES_USER: identityshelf
+      POSTGRES_PASSWORD: identityshelf
+    ports:
+      - "5431:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: identityshelf-app
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/identityshelf
+      SPRING_DATASOURCE_USERNAME: identityshelf
+      SPRING_DATASOURCE_PASSWORD: identityshelf
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_FLYWAY_ENABLED: 'true'
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_ORG_IDENTITYSHELF: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: DEBUG
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: DEBUG
+      LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL: TRACE
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./admin-frontend
+    container_name: identityshelf-frontend
+    depends_on:
+      - app
+    ports:
+      - "3000:80"
+
+volumes:
+  db_data:
