@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { IdentityType, getIdentityType } from '../api/client'
+import { IdentityType, getIdentityType, deleteAttributeType } from '../api/client'
 
 export default function IdentityTypeView() {
   const { name } = useParams<{ name: string }>()
@@ -30,8 +30,7 @@ export default function IdentityTypeView() {
   async function handleDeleteAttribute(attributeId: string, attributeName: string) {
     if (confirm(`Are you sure you want to delete the attribute "${attributeName}"? This action cannot be undone.`)) {
       try {
-        // TODO: Implement deleteAttributeType API call
-        // await deleteAttributeType(attributeId)
+        await deleteAttributeType(attributeId)
         alert(`Attribute "${attributeName}" deleted successfully!`)
         loadIdentityType() // Reload to refresh the list
       } catch (err) {

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { createIdentity, getIdentity, updateIdentity, listIdentityTypes, IdentityType, AttributeType } from '../api/client'
+import { createIdentity, getIdentity, updateIdentity, listIdentityTypes, getIdentityType, IdentityType, AttributeType } from '../api/client'
 import { useNavigate, useParams } from 'react-router-dom'
 
 export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
@@ -24,16 +24,26 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
 
   useEffect(() => {
     if (mode === 'edit' && id) {
-      getIdentity(id).then((i) => {
-        // TODO: Load identity type and attributes for edit mode
-        // For now, we'll need to implement this properly
+      getIdentity(id).then(async (identity) => {
+        try {
+          // Load the identity type to get its attributes
+          const identityType = await getIdentityType(identity.identityType)
+          setIdentityTypes([identityType])
+          setSelectedIdentityType(identityType.id)
+          setAttributes(identityType.attributes)
+          
+          // Populate the form with existing attribute values
+          setAttributeValues(identity.attributes)
+        } catch (e) {
+          setError(String(e))
+        }
       }).catch((e) => setError(String(e)))
     }
   }, [mode, id])
 
-  // When identity type changes, load its attributes
+  // When identity type changes in create mode, load its attributes and initialize defaults
   useEffect(() => {
-    if (selectedIdentityType) {
+    if (mode === 'create' && selectedIdentityType) {
       const selectedType = identityTypes.find((t: IdentityType) => t.id === selectedIdentityType)
       if (selectedType) {
         setAttributes(selectedType.attributes)
@@ -48,11 +58,11 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
         })
         setAttributeValues(initialValues)
       }
-    } else {
+    } else if (mode === 'create' && !selectedIdentityType) {
       setAttributes([])
       setAttributeValues({})
     }
-  }, [selectedIdentityType, identityTypes])
+  }, [selectedIdentityType, identityTypes, mode])
 
   const handleAttributeChange = (attributeName: string, value: any) => {
     setAttributeValues((prev: Record<string, any>) => ({
