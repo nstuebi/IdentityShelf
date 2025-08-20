@@ -145,6 +145,53 @@ export async function getAttributesForType(typeName: string): Promise<AttributeT
   return res.json()
 }
 
+// Attribute Type API functions
+export async function getAttributeType(id: string): Promise<AttributeType> {
+  const res = await fetch(`/api/attribute-types/${id}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Attribute type not found: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function createAttributeType(payload: {
+  name: string
+  displayName: string
+  description?: string
+  dataType: string
+  required: boolean
+  defaultValue?: string
+  validationRegex?: string
+  sortOrder: number
+  active: boolean
+  identityTypeId: string
+}): Promise<AttributeType> {
+  const res = await fetch('/api/attribute-types', { method: 'POST', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to create attribute type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function updateAttributeType(id: string, payload: Partial<AttributeType>): Promise<AttributeType> {
+  const res = await fetch(`/api/attribute-types/${id}`, { method: 'PUT', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to update attribute type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function deleteAttributeType(id: string): Promise<void> {
+  const res = await fetch(`/api/attribute-types/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to delete attribute type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+}
+
 // Build Info API functions
 export interface BuildInfo {
   applicationName: string

@@ -5,6 +5,7 @@ import IdentityForm from './pages/IdentityForm'
 import IdentityTypeList from './pages/IdentityTypeList'
 import IdentityTypeForm from './pages/IdentityTypeForm'
 import IdentityTypeView from './pages/IdentityTypeView'
+import AttributeForm from './components/AttributeForm'
 import { getBuildInfo, BuildInfo } from './api/client'
 
 export default function App() {
@@ -53,6 +54,10 @@ export default function App() {
           <Route path="/types/new" element={<IdentityTypeForm />} />
           <Route path="/types/:name/edit" element={<IdentityTypeForm />} />
           <Route path="/types/:name/view" element={<IdentityTypeView />} />
+          
+          {/* Attribute routes */}
+          <Route path="/types/:typeName/attributes/add" element={<AttributeForm mode="create" />} />
+          <Route path="/types/:typeName/attributes/:attributeId/edit" element={<AttributeForm mode="edit" />} />
         </Routes>
       </main>
     </div>
