@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { IdentityType, AttributeType, getIdentityType } from '../api/client'
-import AttributeTypeForm from '../components/AttributeTypeForm'
+import { IdentityType, getIdentityType } from '../api/client'
 
 interface IdentityTypeFormData {
   name: string
   displayName: string
   description: string
   active: boolean
-  attributes: AttributeType[]
 }
 
 export default function IdentityTypeForm() {
@@ -20,8 +18,7 @@ export default function IdentityTypeForm() {
     name: '',
     displayName: '',
     description: '',
-    active: true,
-    attributes: []
+    active: true
   })
   const [loading, setLoading] = useState(isEditMode)
   const [error, setError] = useState<string | null>(null)
@@ -41,8 +38,7 @@ export default function IdentityTypeForm() {
         name: data.name,
         displayName: data.displayName,
         description: data.description || '',
-        active: data.active,
-        attributes: data.attributes || []
+        active: data.active
       })
       setError(null)
     } catch (err) {
@@ -56,20 +52,13 @@ export default function IdentityTypeForm() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  function handleAttributesChange(attributes: AttributeType[]) {
-    handleInputChange('attributes', attributes)
-  }
+
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     
     if (!formData.name || !formData.displayName) {
       alert('Please fill in all required fields')
-      return
-    }
-
-    if (formData.attributes.length === 0) {
-      alert('Please add at least one attribute')
       return
     }
 
@@ -205,17 +194,7 @@ export default function IdentityTypeForm() {
           </div>
         </div>
 
-        <div style={{ 
-          border: '1px solid #e5e7eb', 
-          borderRadius: 8, 
-          padding: '1.5rem',
-          background: 'white'
-        }}>
-          <AttributeTypeForm
-            attributes={formData.attributes}
-            onAttributesChange={handleAttributesChange}
-          />
-        </div>
+
 
         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px' }}>
           <button
