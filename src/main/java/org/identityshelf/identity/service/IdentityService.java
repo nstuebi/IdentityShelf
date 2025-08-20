@@ -22,6 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.identityshelf.identity.service.IdentityValidationService;
+import org.identityshelf.identity.service.IdentityValidationService.ValidationResult;
+import org.identityshelf.identity.service.IdentityValidationService.ValidationError;
+import org.identityshelf.identity.exception.ValidationException;
 
 @Service
 @Transactional
@@ -32,15 +36,18 @@ public class IdentityService {
     private final IdentityRepository identityRepository;
     private final IdentityTypeRepository identityTypeRepository;
     private final AttributeTypeRepository attributeTypeRepository;
+    private final IdentityValidationService validationService;
 
     public IdentityService(
         IdentityRepository identityRepository,
         IdentityTypeRepository identityTypeRepository,
-        AttributeTypeRepository attributeTypeRepository
+        AttributeTypeRepository attributeTypeRepository,
+        IdentityValidationService validationService
     ) {
         this.identityRepository = identityRepository;
         this.identityTypeRepository = identityTypeRepository;
         this.attributeTypeRepository = attributeTypeRepository;
+        this.validationService = validationService;
     }
 
     public IdentityResponse createIdentity(CreateIdentityRequest request) {
@@ -48,6 +55,21 @@ public class IdentityService {
             request.getUsername(), request.getEmail(), request.getIdentityType());
         
         try {
+            // Get the identity type
+            IdentityType identityType = identityTypeRepository.findById(request.getIdentityType())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid identity type ID: " + request.getIdentityType()));
+
+            // Get attribute types for validation
+            List<AttributeType> attributeTypes = attributeTypeRepository
+                .findByIdentityTypeIdAndActiveTrueOrderBySortOrder(identityType.getId());
+            
+            // Validate the request
+            ValidationResult validationResult = validationService.validateIdentity(request, attributeTypes);
+            if (!validationResult.isValid()) {
+                logger.warn("Validation failed for identity creation: {}", validationResult.getErrors());
+                throw new ValidationException("Validation failed", validationResult.getErrors());
+            }
+
             if (identityRepository.existsByUsername(request.getUsername())) {
                 logger.warn("Username already exists: {}", request.getUsername());
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
@@ -56,10 +78,6 @@ public class IdentityService {
                 logger.warn("Email already exists: {}", request.getEmail());
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
             }
-
-            // Get the identity type
-            IdentityType identityType = identityTypeRepository.findByName(request.getIdentityType())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid identity type: " + request.getIdentityType()));
 
             Identity identity = new Identity();
             identity.setUsername(request.getUsername());
@@ -70,10 +88,7 @@ public class IdentityService {
 
             // Create and set attribute values
             if (request.getAttributes() != null) {
-                List<AttributeType> attributes = attributeTypeRepository
-                    .findByIdentityTypeIdAndActiveTrueOrderBySortOrder(identityType.getId());
-                
-                for (AttributeType attribute : attributes) {
+                for (AttributeType attribute : attributeTypes) {
                     Object value = request.getAttributes().get(attribute.getName());
                     if (value != null || attribute.isRequired()) {
                         IdentityAttributeValue identityValue = new IdentityAttributeValue(identity, attribute);

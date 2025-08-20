@@ -23,8 +23,8 @@ WORKDIR /app
 # Copy fat jar
 COPY --from=build /app/build/libs/*.jar /app/app.jar
 
-EXPOSE 8080
-ENV JAVA_OPTS="" \
+EXPOSE 8080 5005
+ENV JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005" \
     SPRING_PROFILES_ACTIVE=default
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

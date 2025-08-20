@@ -34,7 +34,7 @@ CREATE TABLE identity_attribute_values (
     attribute_type_id VARCHAR(36) NOT NULL,
     string_value TEXT,
     integer_value BIGINT,
-    decimal_value DECIMAL(19,4),
+    decimal_value DOUBLE PRECISION,
     boolean_value BOOLEAN,
     date_value TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,

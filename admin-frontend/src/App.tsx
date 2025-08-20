@@ -1,21 +1,45 @@
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import IdentitiesList from './pages/IdentitiesList'
 import IdentityForm from './pages/IdentityForm'
 import IdentityTypeList from './pages/IdentityTypeList'
 import IdentityTypeForm from './pages/IdentityTypeForm'
 import IdentityTypeView from './pages/IdentityTypeView'
+import { getBuildInfo, BuildInfo } from './api/client'
 
 export default function App() {
+  const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null)
+  const [frontendBuildTime] = useState(() => new Date().toISOString())
+  
+  useEffect(() => {
+    // Fetch build info from backend
+    getBuildInfo()
+      .then(setBuildInfo)
+      .catch(() => setBuildInfo(null)) // Silently fail if backend is not available
+  }, [])
+
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', margin: '1.5rem' }}>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ margin: 0 }}>IdentityShelf Admin</h1>
-        <nav style={{ display: 'flex', gap: 12 }}>
-          <Link to="/">Identities</Link>
-          <Link to="/types">Types</Link>
-          <NewButton />
-        </nav>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h1 style={{ margin: 0 }}>IdentityShelf Admin</h1>
+          <div style={{ fontSize: '0.75em', color: '#6b7280', marginTop: '4px' }}>
+            <span>Frontend: {new Date(frontendBuildTime).toLocaleString()}</span>
+            {buildInfo && (
+              <>
+                <span style={{ margin: '0 8px' }}>•</span>
+                <span>Backend: {new Date(buildInfo.buildTime).toLocaleString()}</span>
+              </>
+            )}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <nav style={{ display: 'flex', gap: 12 }}>
+            <Link to="/">Identities</Link>
+            <Link to="/types">Types</Link>
+            <NewButton />
+          </nav>
+        </div>
       </header>
       <main style={{ marginTop: '1rem' }}>
         <Routes>

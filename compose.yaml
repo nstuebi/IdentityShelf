@@ -29,6 +29,7 @@ services:
       LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL: TRACE
     ports:
       - "8080:8080"
+      - "5005:5005"
 
   frontend:
     build: ./admin-frontend

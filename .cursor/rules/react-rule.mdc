@@ -1,0 +1,11 @@
+---
+description: React
+globs:
+alwaysApply: false
+---
+React components should follow this layout:
+Props interface at top
+Component as named export
+Styles at bottom
+
+@component-template.tsx
