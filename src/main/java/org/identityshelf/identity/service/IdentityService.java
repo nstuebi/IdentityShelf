@@ -3,6 +3,7 @@ package org.identityshelf.identity.service;
 import java.util.UUID;
 import java.util.Map;
 import java.util.List;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import org.identityshelf.identity.domain.Identity;
 import org.identityshelf.identity.domain.IdentityType;
@@ -70,31 +71,39 @@ public class IdentityService {
                 throw new ValidationException("Validation failed", validationResult.getErrors());
             }
 
-            if (identityRepository.existsByUsername(request.getUsername())) {
-                logger.warn("Username already exists: {}", request.getUsername());
+            // Extract core attributes from the attributes map
+            Map<String, Object> attributes = request.getAttributes() != null ? request.getAttributes() : new HashMap<>();
+            String username = (String) attributes.get("username");
+            String email = (String) attributes.get("email");
+            String firstName = (String) attributes.get("first_name");
+            String lastName = (String) attributes.get("last_name");
+            
+            // Check for duplicates
+            if (username != null && identityRepository.existsByUsername(username)) {
+                logger.warn("Username already exists: {}", username);
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
             }
-            if (identityRepository.existsByEmail(request.getEmail())) {
-                logger.warn("Email already exists: {}", request.getEmail());
+            if (email != null && identityRepository.existsByEmail(email)) {
+                logger.warn("Email already exists: {}", email);
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
             }
 
             Identity identity = new Identity();
-            identity.setUsername(request.getUsername());
-            identity.setEmail(request.getEmail());
-            identity.setFirstName(request.getFirstName());
-            identity.setLastName(request.getLastName());
+            identity.setUsername(username);
+            identity.setEmail(email);
+            identity.setFirstName(firstName);
+            identity.setLastName(lastName);
             identity.setIdentityType(identityType);
 
             // Create and set attribute values
-            if (request.getAttributes() != null) {
-                for (AttributeType attribute : attributeTypes) {
-                    Object value = request.getAttributes().get(attribute.getName());
-                    if (value != null || attribute.isRequired()) {
-                        IdentityAttributeValue identityValue = new IdentityAttributeValue(identity, attribute);
-                        identityValue.setValue(value != null ? value : attribute.getDefaultValue());
-                        identity.addValue(identityValue);
-                    }
+            for (AttributeType attribute : attributeTypes) {
+                Object value = attributes.get(attribute.getName());
+                if (value != null || attribute.isRequired()) {
+                    IdentityAttributeValue identityValue = new IdentityAttributeValue(identity, attribute);
+                    identityValue.setValue(value != null ? value : attribute.getDefaultValue());
+                    identity.addValue(identityValue);
+                    logger.debug("Added attribute value: {} = {} (AttributeType: {})", 
+                        attribute.getName(), value, attribute.getId());
                 }
             }
 
@@ -157,12 +166,28 @@ public class IdentityService {
     }
 
     private IdentityResponse toResponse(Identity identity) {
-        // Convert attributes to a map
+        logger.debug("Converting identity to response. Values count: {}", identity.getValues().size());
+        
+        // Convert attributes to a map, filtering out any with null AttributeType or null name
         Map<String, Object> attributesMap = identity.getValues().stream()
+            .filter(v -> {
+                if (v.getAttributeType() == null) {
+                    logger.warn("Found IdentityAttributeValue with null AttributeType: {}", v.getId());
+                    return false;
+                }
+                if (v.getAttributeType().getName() == null) {
+                    logger.warn("Found AttributeType with null name: {}", v.getAttributeType().getId());
+                    return false;
+                }
+                return true;
+            })
+            .filter(v -> v.getAttributeType().getName() != null && !v.getAttributeType().getName().trim().isEmpty())
             .collect(Collectors.toMap(
                 v -> v.getAttributeType().getName(),
-                IdentityAttributeValue::getValue
+                v -> v.getValue() != null ? v.getValue() : ""
             ));
+        
+        logger.debug("Created attributes map with {} entries", attributesMap.size());
             
         return new IdentityResponse(
             identity.getId(),

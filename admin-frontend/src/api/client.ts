@@ -66,17 +66,36 @@ export async function getIdentity(id: string): Promise<Identity> {
 }
 
 export async function createIdentity(payload: {
-  username: string
-  email: string
-  firstName?: string
-  lastName?: string
   identityType: string
   attributes: Record<string, any>
 }): Promise<Identity> {
   const res = await fetch('/api/identities', { method: 'POST', headers, body: JSON.stringify(payload) })
   if (!res.ok) {
-    const errorText = await res.text()
-    throw new Error(`Failed to create identity: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+    let errorMessage = `Failed to create identity: ${res.status} ${res.statusText}`
+    let errorDetails: any = null
+    
+    try {
+      const errorData = await res.json()
+      errorDetails = errorData
+      
+      if (errorData.validationErrors && Array.isArray(errorData.validationErrors)) {
+        // Handle validation errors
+        const validationMessages = errorData.validationErrors
+          .map((err: any) => `${err.field}: ${err.message}`)
+          .join(', ')
+        errorMessage = `Validation failed: ${validationMessages}`
+      } else if (errorData.message) {
+        errorMessage = errorData.message
+      } else if (errorData.error) {
+        errorMessage = `${errorData.error}: ${errorData.message || 'An error occurred'}`
+      }
+    } catch {
+      // If we can't parse the error response, use the default message
+    }
+    
+    const error = new Error(errorMessage)
+    ;(error as any).details = errorDetails
+    throw error
   }
   return res.json()
 }

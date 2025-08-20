@@ -5,10 +5,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   const navigate = useNavigate()
   const { id } = useParams()
-  const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
   const [selectedIdentityType, setSelectedIdentityType] = useState<string>('')
   const [identityTypes, setIdentityTypes] = useState<IdentityType[]>([])
   const [attributes, setAttributes] = useState<AttributeType[]>([])
@@ -29,11 +25,8 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   useEffect(() => {
     if (mode === 'edit' && id) {
       getIdentity(id).then((i) => {
-        setUsername(i.username)
-        setEmail(i.email)
-        setFirstName(i.firstName ?? '')
-        setLastName(i.lastName ?? '')
         // TODO: Load identity type and attributes for edit mode
+        // For now, we'll need to implement this properly
       }).catch((e) => setError(String(e)))
     }
   }, [mode, id])
@@ -117,7 +110,6 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
             value={value}
             onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
             required={attribute.required}
-            maxLength={320}
           />
         )
       default: // STRING, PHONE, URL, SELECT, MULTI_SELECT
@@ -127,7 +119,7 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
             value={value}
             onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
             required={attribute.required}
-            maxLength={255}
+            placeholder={attribute.validationRegex ? 'Format: ' + attribute.validationRegex : undefined}
           />
         )
     }
@@ -141,18 +133,6 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     // Validate required fields
     if (mode === 'create' && !selectedIdentityType) {
       setError('Please select an identity type')
-      setLoading(false)
-      return
-    }
-    
-    if (!username.trim()) {
-      setError('Username is required')
-      setLoading(false)
-      return
-    }
-    
-    if (!email.trim()) {
-      setError('Email is required')
       setLoading(false)
       return
     }
@@ -173,27 +153,34 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     
     try {
       if (mode === 'create') {
+        // Send all data as attributes - no hardcoded extraction
         await createIdentity({ 
-          username, 
-          email, 
-          firstName, 
-          lastName, 
           identityType: selectedIdentityType,
           attributes: attributeValues
         })
       } else if (id) {
-        await updateIdentity(id, { username, email, firstName, lastName })
+        // For edit mode, we'll need to implement this properly
+        // For now, just navigate back
+        navigate('/')
+        return
       }
       navigate('/')
     } catch (e) {
       setError(String(e))
       // Capture detailed error information
       if (e instanceof Error) {
-        setErrorDetails({
+        const errorDetails: any = {
           message: e.message,
           name: e.name,
           stack: e.stack
-        })
+        }
+        
+        // Check if the error has additional details from the API
+        if ((e as any).details) {
+          errorDetails.apiResponse = (e as any).details
+        }
+        
+        setErrorDetails(errorDetails)
       } else if (typeof e === 'object' && e !== null) {
         setErrorDetails(e)
       } else {
@@ -234,9 +221,9 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
 
   return (
     <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16, maxWidth: 500 }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-         <h2>{mode === 'create' ? 'New Identity' : 'Edit Identity'}</h2>
-       </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>{mode === 'create' ? 'New Identity' : 'Edit Identity'}</h2>
+      </div>
       
       {error && (
         <div style={{ color: '#b91c1c', padding: '12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6 }}>
@@ -246,18 +233,38 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
               <summary style={{ cursor: 'pointer', fontWeight: 500, color: '#7f1d1d' }}>
                 Show Error Details
               </summary>
-              <pre style={{ 
-                marginTop: '8px', 
-                padding: '8px', 
-                background: '#f3f4f6', 
-                border: '1px solid #d1d5db', 
-                borderRadius: '4px', 
-                fontSize: '0.75em', 
-                overflow: 'auto',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {JSON.stringify(errorDetails, null, 2)}
-              </pre>
+              <div style={{ marginTop: '8px' }}>
+                {errorDetails.apiResponse && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#7f1d1d' }}>API Response:</h4>
+                    <pre style={{ 
+                      margin: '0 0 8px 0', 
+                      padding: '8px', 
+                      background: '#f3f4f6', 
+                      border: '1px solid #d1d5db', 
+                      borderRadius: '4px', 
+                      fontSize: '0.75em', 
+                      overflow: 'auto',
+                      whiteSpace: 'pre-wrap'
+                    }}>
+                      {JSON.stringify(errorDetails.apiResponse, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#7f1d1d' }}>Full Error Details:</h4>
+                <pre style={{ 
+                  margin: '0', 
+                  padding: '8px', 
+                  background: '#f3f4f6', 
+                  border: '1px solid #d1d5db', 
+                  borderRadius: '4px', 
+                  fontSize: '0.75em', 
+                  overflow: 'auto',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {JSON.stringify(errorDetails, null, 2)}
+                </pre>
+              </div>
             </details>
           )}
         </div>
@@ -282,121 +289,67 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
         </label>
       )}
 
-      {selectedIdentityType && (
-        <>
+      {selectedIdentityType && attributes.length > 0 && (
+        <div style={{ display: 'grid', gap: 16 }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Identity Information</h3>
           <div style={{ display: 'grid', gap: 16 }}>
-            <h3 style={{ margin: 0, fontSize: '1.1em', color: '#374151' }}>Basic Information</h3>
-            
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span style={{ fontWeight: 500 }}>Username *</span>
-              <input 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)} 
-                required 
-                maxLength={100}
-                style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
-              />
-            </label>
-            
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span style={{ fontWeight: 500 }}>Email *</span>
-              <input 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
-                maxLength={320}
-                style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
-              />
-            </label>
-            
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span style={{ fontWeight: 500 }}>First name</span>
-              <input 
-                value={firstName} 
-                onChange={(e) => setFirstName(e.target.value)} 
-                maxLength={100}
-                style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
-              />
-            </label>
-            
-            <label style={{ display: 'grid', gap: 4 }}>
-              <span style={{ fontWeight: 500 }}>Last name</span>
-              <input 
-                value={lastName} 
-                onChange={(e) => setLastName(e.target.value)} 
-                maxLength={100}
-                style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
-              />
-            </label>
+            {attributes
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map(attribute => (
+                <label key={attribute.id} style={{ display: 'grid', gap: 4 }}>
+                  <span style={{ fontWeight: 500 }}>
+                    {attribute.displayName}
+                    {attribute.required && <span style={{ color: '#dc2626' }}> *</span>}
+                  </span>
+                  {attribute.description && (
+                    <div style={{ fontSize: '0.875em', color: '#6b7280', marginBottom: '4px' }}>
+                      {attribute.description}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {renderAttributeField(attribute)}
+                  </div>
+                </label>
+              ))}
           </div>
-
-          {/* Dynamic attribute fields */}
-          {attributes.length > 0 && (
-            <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 20 }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Attributes</h3>
-              <div style={{ display: 'grid', gap: 16 }}>
-                {attributes
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map(attribute => (
-                    <label key={attribute.id} style={{ display: 'grid', gap: 4 }}>
-                      <span style={{ fontWeight: 500 }}>
-                        {attribute.displayName}
-                        {attribute.required && <span style={{ color: '#dc2626' }}> *</span>}
-                      </span>
-                      {attribute.description && (
-                        <div style={{ fontSize: '0.875em', color: '#6b7280', marginBottom: '4px' }}>
-                          {attribute.description}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {renderAttributeField(attribute)}
-                      </div>
-                    </label>
-                  ))}
-              </div>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
-             <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-         <button 
-           type="submit" 
-           disabled={loading || (mode === 'create' && !selectedIdentityType)}
-           style={{ 
-             background: '#2563eb', 
-             color: 'white', 
-             border: 'none', 
-             padding: '10px 16px', 
-             borderRadius: 6,
-             fontSize: '14px',
-             fontWeight: 500,
-             cursor: (loading || (mode === 'create' && !selectedIdentityType)) ? 'not-allowed' : 'pointer',
-             opacity: (loading || (mode === 'create' && !selectedIdentityType)) ? 0.6 : 1
-           }}
-         >
-           {loading ? 'Saving...' : (mode === 'create' ? 'Create' : 'Save')}
-         </button>
-         <button 
-           type="button" 
-           onClick={() => navigate('/')} 
-           style={{ 
-             background: '#6b7280', 
-             color: 'white', 
-             border: 'none', 
-             padding: '10px 16px', 
-             borderRadius: 6,
-             fontSize: '14px',
-             fontWeight: 500,
-             cursor: 'pointer'
-           }}
-         >
-           Cancel
-         </button>
-       </div>
-
-
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        <button 
+          type="submit" 
+          disabled={loading || (mode === 'create' && !selectedIdentityType)}
+          style={{ 
+            background: '#2563eb', 
+            color: 'white', 
+            border: 'none', 
+            padding: '10px 16px', 
+            borderRadius: 6,
+            fontSize: '14px',
+            fontWeight: 500,
+            cursor: (loading || (mode === 'create' && !selectedIdentityType)) ? 'not-allowed' : 'pointer',
+            opacity: (loading || (mode === 'create' && !selectedIdentityType)) ? 0.6 : 1
+          }}
+        >
+          {loading ? 'Saving...' : (mode === 'create' ? 'Create' : 'Save')}
+        </button>
+        <button 
+          type="button" 
+          onClick={() => navigate('/')} 
+          style={{ 
+            background: '#6b7280', 
+            color: 'white', 
+            border: 'none', 
+            padding: '10px 16px', 
+            borderRadius: 6,
+            fontSize: '14px',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}
+        >
+          Cancel
+        </button>
+      </div>
     </form>
   )
 }

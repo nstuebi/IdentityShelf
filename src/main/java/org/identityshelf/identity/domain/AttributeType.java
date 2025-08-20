@@ -37,12 +37,6 @@ public class AttributeType {
     @Column(name = "validation_regex")
     private String validationRegex;
     
-    @Column(name = "min_length")
-    private Integer minLength;
-    
-    @Column(name = "max_length")
-    private Integer maxLength;
-    
     @Column(name = "sort_order", nullable = false)
     private int sortOrder = 0;
     
@@ -147,22 +141,6 @@ public class AttributeType {
     
     public void setValidationRegex(String validationRegex) {
         this.validationRegex = validationRegex;
-    }
-    
-    public Integer getMinLength() {
-        return minLength;
-    }
-    
-    public void setMinLength(Integer minLength) {
-        this.minLength = minLength;
-    }
-    
-    public Integer getMaxLength() {
-        return maxLength;
-    }
-    
-    public void setMaxLength(Integer maxLength) {
-        this.maxLength = maxLength;
     }
     
     public int getSortOrder() {

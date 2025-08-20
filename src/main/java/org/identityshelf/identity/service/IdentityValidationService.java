@@ -19,23 +19,19 @@ public class IdentityValidationService {
     public ValidationResult validateIdentity(CreateIdentityRequest request, List<AttributeType> attributeTypes) {
         List<ValidationError> errors = new ArrayList<>();
         
-        // Validate username
-        validateField("username", request.getUsername(), attributeTypes, errors);
-        
-        // Validate email
-        validateField("email", request.getEmail(), attributeTypes, errors);
-        
-        // Validate firstName
-        if (request.getFirstName() != null) {
-            validateField("first_name", request.getFirstName(), attributeTypes, errors);
+        // Validate all required attributes first
+        for (AttributeType attributeType : attributeTypes) {
+            if (attributeType.isRequired()) {
+                Object value = request.getAttributes() != null ? 
+                    request.getAttributes().get(attributeType.getName()) : null;
+                if (value == null || value.toString().trim().isEmpty()) {
+                    errors.add(new ValidationError(attributeType.getName(), 
+                        "Field '" + attributeType.getDisplayName() + "' is required"));
+                }
+            }
         }
         
-        // Validate lastName
-        if (request.getLastName() != null) {
-            validateField("last_name", request.getLastName(), attributeTypes, errors);
-        }
-        
-        // Validate custom attributes
+        // Validate all provided attributes
         if (request.getAttributes() != null) {
             for (Map.Entry<String, Object> entry : request.getAttributes().entrySet()) {
                 String attributeName = entry.getKey();
@@ -67,17 +63,6 @@ public class IdentityValidationService {
         // Skip further validation if value is null/empty and not required
         if (value == null || value.trim().isEmpty()) {
             return;
-        }
-        
-        // Length validation
-        if (attributeType.getMinLength() != null && value.length() < attributeType.getMinLength()) {
-            errors.add(new ValidationError(fieldName, 
-                attributeType.getDisplayName() + " must be at least " + attributeType.getMinLength() + " characters long"));
-        }
-        
-        if (attributeType.getMaxLength() != null && value.length() > attributeType.getMaxLength()) {
-            errors.add(new ValidationError(fieldName, 
-                attributeType.getDisplayName() + " must not exceed " + attributeType.getMaxLength() + " characters"));
         }
         
         // Regex validation

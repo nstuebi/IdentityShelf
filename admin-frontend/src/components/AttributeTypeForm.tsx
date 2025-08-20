@@ -10,6 +10,18 @@ const DATA_TYPES = [
   'STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'DATE', 'DATETIME', 'EMAIL', 'PHONE', 'URL', 'SELECT', 'MULTI_SELECT'
 ]
 
+// Common regex patterns for different data types
+const COMMON_REGEX_PATTERNS = {
+  'Username': '^[a-zA-Z0-9_]{3,20}$',
+  'Email': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
+  'Phone': '^\\+?[\\d\\s\\-\\(\\)]{7,20}$',
+  'URL': '^https?:\\/\\/[^\\s\\/$.?#].[^\\s]*$',
+  'Date (YYYY-MM-DD)': '^\\d{4}-\\d{2}-\\d{2}$',
+  'Time (HH:MM)': '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+  'Postal Code (US)': '^\\d{5}(-\\d{4})?$',
+  'Credit Card': '^\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}$'
+}
+
 export default function AttributeTypeForm({ attributes, onAttributesChange }: AttributeTypeFormProps) {
   const [showForm, setShowForm] = useState(false)
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
@@ -24,6 +36,43 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
     sortOrder: 0,
     active: true
   })
+  
+  // Regex testing state
+  const [testValue, setTestValue] = useState('')
+  const [regexTestResult, setRegexTestResult] = useState<{ isValid: boolean; message: string } | null>(null)
+
+  // Test regex pattern
+  const testRegex = () => {
+    if (!formData.validationRegex) {
+      setRegexTestResult(null)
+      return
+    }
+
+    try {
+      const regex = new RegExp(formData.validationRegex)
+      const isValid = regex.test(testValue)
+      setRegexTestResult({
+        isValid,
+        message: isValid ? 'Pattern matches!' : 'Pattern does not match'
+      })
+    } catch (error) {
+      setRegexTestResult({
+        isValid: false,
+        message: `Invalid regex: ${error instanceof Error ? error.message : 'Unknown error'}`
+      })
+    }
+  }
+
+  // Apply common regex pattern
+  const applyCommonPattern = (pattern: string) => {
+    setFormData({ ...formData, validationRegex: pattern })
+  }
+
+  // Clear regex test results when regex changes
+  const handleRegexChange = (value: string) => {
+    setFormData({ ...formData, validationRegex: value })
+    setRegexTestResult(null)
+  }
 
   function handleAddAttribute() {
     if (!formData.name || !formData.displayName || !formData.dataType) {
@@ -124,6 +173,8 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
       sortOrder: 0,
       active: true
     })
+    setTestValue('')
+    setRegexTestResult(null)
   }
 
   function cancelForm() {
@@ -280,18 +331,108 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
               <label style={{ display: 'block', marginBottom: '4px', fontWeight: '500' }}>
                 Validation Regex
               </label>
-              <input
-                type="text"
-                value={formData.validationRegex}
-                onChange={(e) => setFormData({ ...formData, validationRegex: e.target.value })}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: 4
-                }}
-                placeholder="Optional regex pattern"
-              />
+              <div style={{ marginBottom: '8px' }}>
+                <input
+                  type="text"
+                  value={formData.validationRegex}
+                  onChange={(e) => handleRegexChange(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: 4
+                  }}
+                  placeholder="e.g., ^[a-zA-Z0-9_]{3,20}$"
+                />
+              </div>
+              
+              {/* Common regex patterns */}
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
+                  Common patterns:
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {Object.entries(COMMON_REGEX_PATTERNS).map(([name, pattern]) => (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => applyCommonPattern(pattern)}
+                      style={{
+                        background: '#f3f4f6',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        padding: '4px 8px',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        color: '#374151'
+                      }}
+                      title={pattern}
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Regex testing */}
+              {formData.validationRegex && (
+                <div style={{ 
+                  border: '1px solid #e5e7eb', 
+                  borderRadius: '4px', 
+                  padding: '12px', 
+                  background: '#f9fafb',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '8px' }}>
+                    Test your regex pattern:
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      type="text"
+                      value={testValue}
+                      onChange={(e) => setTestValue(e.target.value)}
+                      placeholder="Enter test value"
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        fontSize: '0.875rem'
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={testRegex}
+                      style={{
+                        background: '#2563eb',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      Test
+                    </button>
+                  </div>
+                  {regexTestResult && (
+                    <div style={{ 
+                      fontSize: '0.875rem', 
+                      color: regexTestResult.isValid ? '#166534' : '#dc2626',
+                      fontWeight: '500'
+                    }}>
+                      {regexTestResult.message}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Help text */}
+              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <strong>Regex tips:</strong> Use ^ and $ for exact matches, [a-z] for character ranges, 
+                {'{3,20}'} for length limits, \d for digits, \w for word characters.
+              </div>
             </div>
           </div>
 
@@ -356,6 +497,7 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Type</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Required</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Order</th>
+                <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Validation</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Status</th>
                 <th style={{ padding: '8px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Actions</th>
               </tr>
@@ -379,6 +521,9 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
                     </td>
                     <td style={{ padding: '8px', border: '1px solid #e5e7eb' }}>
                       {attribute.sortOrder}
+                    </td>
+                    <td style={{ padding: '8px', border: '1px solid #e5e7eb' }}>
+                      {attribute.validationRegex ? attribute.validationRegex : 'N/A'}
                     </td>
                     <td style={{ padding: '8px', border: '1px solid #e5e7eb' }}>
                       <button
