@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { IdentityType, getIdentityType, deleteAttributeType } from '../api/client'
+import { IdentityType, IdentityTypeAttributeMapping, getIdentityType } from '../api/client'
+import AttributeMappingManager from '../components/AttributeMappingManager'
 
 export default function IdentityTypeView() {
   const { name } = useParams<{ name: string }>()
   const [type, setType] = useState<IdentityType | null>(null)
+  const [mappings, setMappings] = useState<IdentityTypeAttributeMapping[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,24 +29,15 @@ export default function IdentityTypeView() {
     }
   }
 
-  async function handleDeleteAttribute(attributeId: string, attributeName: string) {
-    if (confirm(`Are you sure you want to delete the attribute "${attributeName}"? This action cannot be undone.`)) {
-      try {
-        await deleteAttributeType(attributeId)
-        alert(`Attribute "${attributeName}" deleted successfully!`)
-        loadIdentityType() // Reload to refresh the list
-      } catch (err) {
-        alert(`Failed to delete attribute: ${err instanceof Error ? err.message : 'Unknown error'}`)
-      }
-    }
+  const handleMappingsChange = (newMappings: IdentityTypeAttributeMapping[]) => {
+    setMappings(newMappings)
   }
 
   if (loading) return <div>Loading identity type...</div>
   if (error) return <div style={{ color: 'red' }}>Error: {error}</div>
   if (!type) return <div>Identity type not found</div>
 
-  const activeAttributes = type.attributes.filter(attr => attr.active).sort((a, b) => a.sortOrder - b.sortOrder)
-  const inactiveAttributes = type.attributes.filter(attr => !attr.active).sort((a, b) => a.sortOrder - b.sortOrder)
+
 
   return (
     <div>
@@ -168,189 +161,11 @@ export default function IdentityTypeView() {
         padding: '1.5rem',
         background: 'white'
       }}>
-        <h3>Attributes ({activeAttributes.length} active, {inactiveAttributes.length} inactive)</h3>
-        
-        {activeAttributes.length > 0 && (
-          <div style={{ marginBottom: '2rem' }}>
-            <h4 style={{ color: '#059669', marginBottom: '1rem' }}>Active Attributes</h4>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e5e7eb' }}>
-                <thead>
-                  <tr style={{ background: '#f0fdf4' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Name</th>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Display Name</th>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Type</th>
-                                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Required</th>
-                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Default Value</th>
-                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Order</th>
-                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeAttributes.map((attribute) => (
-                  <tr key={attribute.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb', fontWeight: '500' }}>
-                      {attribute.name}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.displayName}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      <span style={{ 
-                        padding: '2px 8px', 
-                        borderRadius: '12px', 
-                        fontSize: '0.75rem',
-                        background: '#dbeafe',
-                        color: '#1e40af'
-                      }}>
-                        {attribute.dataType.toLowerCase()}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.required ? (
-                        <span style={{ color: '#dc2626', fontWeight: '500' }}>Yes</span>
-                      ) : (
-                        <span style={{ color: '#6b7280' }}>No</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.defaultValue || '-'}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.sortOrder}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <Link
-                          to={`/types/${type.name}/attributes/${attribute.id}/edit`}
-                          style={{
-                            background: '#2563eb',
-                            color: 'white',
-                            textDecoration: 'none',
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: '0.75rem'
-                          }}
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteAttribute(attribute.id, attribute.name)}
-                          style={{
-                            background: '#dc2626',
-                            color: 'white',
-                            border: 'none',
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: '0.75rem',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {inactiveAttributes.length > 0 && (
-          <div>
-            <h4 style={{ color: '#dc2626', marginBottom: '1rem' }}>Inactive Attributes</h4>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e5e7eb' }}>
-                <thead>
-                  <tr style={{ background: '#fef2f2' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Name</th>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Display Name</th>
-                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Type</th>
-                                      <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Required</th>
-                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Default Value</th>
-                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Order</th>
-                  <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inactiveAttributes.map((attribute) => (
-                  <tr key={attribute.id} style={{ borderBottom: '1px solid #e5e7eb', opacity: 0.6 }}>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb', fontWeight: '500' }}>
-                      {attribute.name}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.displayName}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      <span style={{ 
-                        padding: '2px 8px', 
-                        borderRadius: '12px', 
-                        fontSize: '0.75rem',
-                        background: '#f3f4f6',
-                        color: '#6b7280'
-                      }}>
-                        {attribute.dataType.toLowerCase()}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.required ? (
-                        <span style={{ color: '#dc2626', fontWeight: '500' }}>Yes</span>
-                      ) : (
-                        <span style={{ color: '#6b7280' }}>No</span>
-                      )}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.defaultValue || '-'}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      {attribute.sortOrder}
-                    </td>
-                    <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <Link
-                          to={`/types/${type.name}/attributes/${attribute.id}/edit`}
-                          style={{
-                            background: '#2563eb',
-                            color: 'white',
-                            textDecoration: 'none',
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: '0.75rem'
-                          }}
-                        >
-                          Edit
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteAttribute(attribute.id, attribute.name)}
-                          style={{
-                            background: '#dc2626',
-                            color: 'white',
-                            border: 'none',
-                            padding: '4px 8px',
-                            borderRadius: 4,
-                            fontSize: '0.75rem',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {type.attributes.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280', border: '2px dashed #e5e7eb', borderRadius: 8 }}>
-            No attributes defined for this identity type.
-          </div>
-        )}
+        <AttributeMappingManager
+          identityTypeId={type.id}
+          identityTypeName={type.displayName}
+          onMappingsChange={handleMappingsChange}
+        />
       </div>
     </div>
   )

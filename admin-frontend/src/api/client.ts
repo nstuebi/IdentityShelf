@@ -18,7 +18,7 @@ export interface IdentityType {
   active: boolean
   createdAt: string
   updatedAt: string
-  attributes: AttributeType[]
+  attributes?: AttributeType[] // Legacy - will be phased out in favor of mappings
 }
 
 export interface AttributeType {
@@ -27,13 +27,33 @@ export interface AttributeType {
   displayName: string
   description?: string
   dataType: string
-  required: boolean
   defaultValue?: string
   validationRegex?: string
-  sortOrder: number
   active: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface IdentityTypeAttributeMapping {
+  id: string
+  identityTypeId: string
+  identityTypeName: string
+  attributeTypeId: string
+  attributeTypeName: string
+  attributeTypeDisplayName: string
+  attributeTypeDescription?: string
+  attributeDataType: string
+  sortOrder: number
+  required: boolean
+  overrideValidationRegex?: string
+  overrideDefaultValue?: string
+  active: boolean
+  createdAt: string
+  updatedAt: string
+  effectiveValidationRegex?: string
+  effectiveDefaultValue?: string
+  baseValidationRegex?: string
+  baseDefaultValue?: string
 }
 
 export interface Page<T> {
@@ -145,7 +165,16 @@ export async function getAttributesForType(typeName: string): Promise<AttributeT
   return res.json()
 }
 
-// Attribute Type API functions
+// Attribute Type API functions (now independent)
+export async function listAttributeTypes(): Promise<AttributeType[]> {
+  const res = await fetch('/api/attribute-types')
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to list attribute types: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
 export async function getAttributeType(id: string): Promise<AttributeType> {
   const res = await fetch(`/api/attribute-types/${id}`)
   if (!res.ok) {
@@ -160,12 +189,9 @@ export async function createAttributeType(payload: {
   displayName: string
   description?: string
   dataType: string
-  required: boolean
   defaultValue?: string
   validationRegex?: string
-  sortOrder: number
-  active: boolean
-  identityTypeId: string
+  active?: boolean
 }): Promise<AttributeType> {
   const res = await fetch('/api/attribute-types', { method: 'POST', headers, body: JSON.stringify(payload) })
   if (!res.ok) {
@@ -189,6 +215,54 @@ export async function deleteAttributeType(id: string): Promise<void> {
   if (!res.ok) {
     const errorText = await res.text()
     throw new Error(`Failed to delete attribute type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+}
+
+// Identity Type Attribute Mapping API functions
+export async function getMappingsForIdentityType(identityTypeId: string): Promise<IdentityTypeAttributeMapping[]> {
+  const res = await fetch(`/api/identity-type-attribute-mappings/by-identity-type/${identityTypeId}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get mappings: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function createMapping(payload: {
+  identityTypeId: string
+  attributeTypeId: string
+  sortOrder?: number
+  required?: boolean
+  overrideValidationRegex?: string
+  overrideDefaultValue?: string
+}): Promise<IdentityTypeAttributeMapping> {
+  const res = await fetch('/api/identity-type-attribute-mappings', { method: 'POST', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to create mapping: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function updateMapping(id: string, payload: {
+  sortOrder?: number
+  required?: boolean
+  overrideValidationRegex?: string
+  overrideDefaultValue?: string
+}): Promise<IdentityTypeAttributeMapping> {
+  const res = await fetch(`/api/identity-type-attribute-mappings/${id}`, { method: 'PUT', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to update mapping: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function deleteMapping(id: string): Promise<void> {
+  const res = await fetch(`/api/identity-type-attribute-mappings/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to delete mapping: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
   }
 }
 

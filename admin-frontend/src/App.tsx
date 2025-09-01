@@ -5,6 +5,8 @@ import IdentityForm from './pages/IdentityForm'
 import IdentityTypeList from './pages/IdentityTypeList'
 import IdentityTypeForm from './pages/IdentityTypeForm'
 import IdentityTypeView from './pages/IdentityTypeView'
+import AttributeTypeList from './pages/AttributeTypeList'
+import AttributeTypeForm from './pages/AttributeTypeForm'
 import AttributeForm from './components/AttributeForm'
 import { getBuildInfo, BuildInfo } from './api/client'
 
@@ -37,7 +39,8 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <nav style={{ display: 'flex', gap: 12 }}>
             <Link to="/">Identities</Link>
-            <Link to="/types">Types</Link>
+            <Link to="/types">Identity Types</Link>
+            <Link to="/attribute-types">Attribute Types</Link>
             <NewButton />
           </nav>
         </div>
@@ -55,7 +58,12 @@ export default function App() {
           <Route path="/types/:name/edit" element={<IdentityTypeForm />} />
           <Route path="/types/:name/view" element={<IdentityTypeView />} />
           
-          {/* Attribute routes */}
+          {/* Attribute Type routes */}
+          <Route path="/attribute-types" element={<AttributeTypeList />} />
+          <Route path="/attribute-types/create" element={<AttributeTypeForm mode="create" />} />
+          <Route path="/attribute-types/:id/edit" element={<AttributeTypeForm mode="edit" />} />
+          
+          {/* Legacy Attribute routes */}
           <Route path="/types/:typeName/attributes/add" element={<AttributeForm mode="create" />} />
           <Route path="/types/:typeName/attributes/:attributeId/edit" element={<AttributeForm mode="edit" />} />
         </Routes>
@@ -126,12 +134,31 @@ function NewButton() {
               border: 'none',
               background: 'none',
               textAlign: 'left',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              borderBottom: '1px solid #f3f4f6'
             }}
             onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
           >
             New Identity Type
+          </button>
+          <button
+            onClick={() => {
+              navigate('/attribute-types/create')
+              setShowDropdown(false)
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              border: 'none',
+              background: 'none',
+              textAlign: 'left',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          >
+            New Attribute Type
           </button>
         </div>
       )}
