@@ -7,23 +7,23 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "identity_type_attribute_mappings", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"identity_type_id", "attribute_type_id"}))
+@Table(name = "identity_type_attribute_mappings",
+       uniqueConstraints = @UniqueConstraint(columnNames = {"identity_type_uuid", "attribute_type_uuid"}))
 @Data
 @NoArgsConstructor
 public class IdentityTypeAttributeMapping {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
-    private UUID id;
+    @Column(name = "uuid", columnDefinition = "uuid")
+    private UUID uuid;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "identity_type_id", nullable = false)
+    @JoinColumn(name = "identity_type_uuid", nullable = false)
     private IdentityType identityType;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attribute_type_id", nullable = false)
+    @JoinColumn(name = "attribute_type_uuid", nullable = false)
     private AttributeType attributeType;
     
     // Mapping-specific fields

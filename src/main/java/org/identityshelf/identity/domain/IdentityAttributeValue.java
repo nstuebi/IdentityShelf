@@ -10,15 +10,15 @@ public class IdentityAttributeValue {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
-    private UUID id;
+    @Column(name = "uuid", columnDefinition = "uuid")
+    private UUID uuid;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "identity_id", nullable = false)
+    @JoinColumn(name = "identity_uuid", nullable = false)
     private Identity identity;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "attribute_type_id", nullable = false)
+    @JoinColumn(name = "attribute_type_uuid", nullable = false)
     private AttributeType attributeType;
     
     @Column(name = "string_value")
@@ -63,12 +63,12 @@ public class IdentityAttributeValue {
     }
     
     // Getters and Setters
-    public UUID getId() {
-        return id;
+    public UUID getUuid() {
+        return uuid;
     }
     
-    public void setId(UUID id) {
-        this.id = id;
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
     
     public Identity getIdentity() {

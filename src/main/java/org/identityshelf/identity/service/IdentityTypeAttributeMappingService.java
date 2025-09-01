@@ -30,11 +30,11 @@ public class IdentityTypeAttributeMappingService {
     }
     
     public List<IdentityTypeAttributeMapping> getMappingsForAttributeType(String attributeTypeId) {
-        return mappingRepository.findByAttributeTypeIdAndActiveTrue(UUID.fromString(attributeTypeId));
+        return mappingRepository.findByAttributeTypeUuidAndActiveTrue(UUID.fromString(attributeTypeId));
     }
     
     public Optional<IdentityTypeAttributeMapping> getMapping(String identityTypeId, String attributeTypeId) {
-        return mappingRepository.findByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(UUID.fromString(identityTypeId), UUID.fromString(attributeTypeId));
+        return mappingRepository.findByIdentityTypeUuidAndAttributeTypeUuidAndActiveTrue(UUID.fromString(identityTypeId), UUID.fromString(attributeTypeId));
     }
     
     public IdentityTypeAttributeMapping getMappingById(String mappingId) {
@@ -53,7 +53,7 @@ public class IdentityTypeAttributeMappingService {
                 .orElseThrow(() -> new IllegalArgumentException("Attribute type not found: " + attributeTypeId));
         
         // Check if mapping already exists
-        if (mappingRepository.existsByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(UUID.fromString(identityTypeId), UUID.fromString(attributeTypeId))) {
+        if (mappingRepository.existsByIdentityTypeUuidAndAttributeTypeUuidAndActiveTrue(UUID.fromString(identityTypeId), UUID.fromString(attributeTypeId))) {
             throw new IllegalArgumentException("Mapping already exists between identity type and attribute type");
         }
         

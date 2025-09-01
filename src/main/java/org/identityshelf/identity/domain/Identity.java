@@ -17,8 +17,8 @@ import java.util.UUID;
 public class Identity {
 
     @Id
-    @Column(name = "id", nullable = false, columnDefinition = "uuid")
-    private UUID id;
+    @Column(name = "uuid", nullable = false, columnDefinition = "uuid")
+    private UUID uuid;
 
     @Column(name = "username", nullable = false, unique = true, length = 100)
     private String username;
@@ -34,7 +34,7 @@ public class Identity {
     private IdentityStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "identity_type_id", nullable = false)
+    @JoinColumn(name = "identity_type_uuid", nullable = false)
     private IdentityType identityType;
 
     @Column(name = "created_at", nullable = false)
@@ -48,8 +48,8 @@ public class Identity {
 
     @PrePersist
     public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID();
         }
         if (this.status == null) {
             this.status = IdentityStatus.ACTIVE;

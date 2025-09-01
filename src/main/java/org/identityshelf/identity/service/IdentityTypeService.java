@@ -55,7 +55,7 @@ public class IdentityTypeService {
             .orElseThrow(() -> new RuntimeException("Identity type not found: " + typeName));
         
         List<IdentityTypeAttributeMapping> mappings = mappingRepository
-            .findActiveByIdentityTypeWithAttributeType(type.getId());
+            .findActiveByIdentityTypeWithAttributeType(type.getUuid());
         
         return mappings.stream()
             .map(this::toAttributeResponseFromMapping)
@@ -65,14 +65,14 @@ public class IdentityTypeService {
     private IdentityTypeResponse toResponse(IdentityType type) {
         // Get mappings for this identity type
         List<IdentityTypeAttributeMapping> mappings = mappingRepository
-            .findActiveByIdentityTypeWithAttributeType(type.getId());
+            .findActiveByIdentityTypeWithAttributeType(type.getUuid());
         
         List<AttributeTypeResponse> attributes = mappings.stream()
             .map(this::toAttributeResponseFromMapping)
             .collect(Collectors.toList());
             
         return new IdentityTypeResponse(
-            type.getId().toString(),
+            type.getUuid().toString(),
             type.getName(),
             type.getDisplayName(),
             type.getDescription(),
@@ -85,7 +85,7 @@ public class IdentityTypeService {
     
     private AttributeTypeResponse toAttributeResponseFromMapping(IdentityTypeAttributeMapping mapping) {
         return new AttributeTypeResponse(
-            mapping.getAttributeType().getId().toString(),
+            mapping.getAttributeType().getUuid().toString(),
             mapping.getAttributeType().getName(),
             mapping.getAttributeType().getDisplayName(),
             mapping.getAttributeType().getDescription(),

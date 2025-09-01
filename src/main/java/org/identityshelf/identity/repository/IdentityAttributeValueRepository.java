@@ -11,13 +11,13 @@ import java.util.UUID;
 @Repository
 public interface IdentityAttributeValueRepository extends JpaRepository<IdentityAttributeValue, UUID> {
     
-    List<IdentityAttributeValue> findByIdentityId(UUID identityId);
+    List<IdentityAttributeValue> findByIdentityUuid(UUID identityUuid);
     
-    @Query("SELECT iav FROM IdentityAttributeValue iav JOIN FETCH iav.attributeType WHERE iav.identity.id = ?1")
-    List<IdentityAttributeValue> findByIdentityIdWithAttributes(UUID identityId);
+    @Query("SELECT iav FROM IdentityAttributeValue iav JOIN FETCH iav.attributeType WHERE iav.identity.uuid = ?1")
+    List<IdentityAttributeValue> findByIdentityUuidWithAttributes(UUID identityUuid);
     
-    void deleteByIdentityId(UUID identityId);
+    void deleteByIdentityUuid(UUID identityUuid);
     
-    @Query("SELECT iav FROM IdentityAttributeValue iav JOIN FETCH iav.attributeType at WHERE iav.identity.id = ?1 AND at.name = ?2")
-    IdentityAttributeValue findByIdentityIdAndAttributeName(UUID identityId, String attributeName);
+    @Query("SELECT iav FROM IdentityAttributeValue iav JOIN FETCH iav.attributeType at WHERE iav.identity.uuid = ?1 AND at.name = ?2")
+    IdentityAttributeValue findByIdentityUuidAndAttributeName(UUID identityUuid, String attributeName);
 }

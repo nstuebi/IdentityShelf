@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface IdentityRepository extends JpaRepository<Identity, UUID> {
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
-    boolean existsByUsernameAndIdNot(String username, UUID id);
-    boolean existsByEmailAndIdNot(String email, UUID id);
+    boolean existsByUsernameAndUuidNot(String username, UUID uuid);
+    boolean existsByEmailAndUuidNot(String email, UUID uuid);
 }
 
 

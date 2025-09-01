@@ -13,24 +13,24 @@ import java.util.UUID;
 @Repository
 public interface IdentityTypeAttributeMappingRepository extends JpaRepository<IdentityTypeAttributeMapping, UUID> {
     
-    List<IdentityTypeAttributeMapping> findByIdentityTypeIdAndActiveTrue(UUID identityTypeId);
+    List<IdentityTypeAttributeMapping> findByIdentityTypeUuidAndActiveTrue(UUID identityTypeUuid);
     
-    List<IdentityTypeAttributeMapping> findByAttributeTypeIdAndActiveTrue(UUID attributeTypeId);
+    List<IdentityTypeAttributeMapping> findByAttributeTypeUuidAndActiveTrue(UUID attributeTypeUuid);
     
-    Optional<IdentityTypeAttributeMapping> findByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(
-            UUID identityTypeId, UUID attributeTypeId);
+    Optional<IdentityTypeAttributeMapping> findByIdentityTypeUuidAndAttributeTypeUuidAndActiveTrue(
+            UUID identityTypeUuid, UUID attributeTypeUuid);
     
     @Query("SELECT m FROM IdentityTypeAttributeMapping m " +
-           "WHERE m.identityType.id = :identityTypeId AND m.active = true " +
+           "WHERE m.identityType.uuid = :identityTypeUuid AND m.active = true " +
            "ORDER BY m.sortOrder ASC")
-    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeOrderBySortOrder(@Param("identityTypeId") UUID identityTypeId);
+    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeOrderBySortOrder(@Param("identityTypeUuid") UUID identityTypeUuid);
     
     @Query("SELECT m FROM IdentityTypeAttributeMapping m " +
            "JOIN FETCH m.attributeType " +
            "JOIN FETCH m.identityType " +
-           "WHERE m.identityType.id = :identityTypeId AND m.active = true " +
+           "WHERE m.identityType.uuid = :identityTypeUuid AND m.active = true " +
            "ORDER BY m.sortOrder ASC")
-    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeWithAttributeType(@Param("identityTypeId") UUID identityTypeId);
+    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeWithAttributeType(@Param("identityTypeUuid") UUID identityTypeUuid);
     
-    boolean existsByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(UUID identityTypeId, UUID attributeTypeId);
+    boolean existsByIdentityTypeUuidAndAttributeTypeUuidAndActiveTrue(UUID identityTypeUuid, UUID attributeTypeUuid);
 }

@@ -18,8 +18,8 @@ public class IdentityType {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
-    private UUID id;
+    @Column(name = "uuid", columnDefinition = "uuid")
+    private UUID uuid;
     
     @Column(name = "name", nullable = false, unique = true)
     private String name;

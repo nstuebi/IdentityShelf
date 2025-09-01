@@ -16,8 +16,8 @@ public class AttributeType {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid")
-    private UUID id;
+    @Column(name = "uuid", columnDefinition = "uuid")
+    private UUID uuid;
     
     @Column(name = "name", nullable = false)
     private String name;

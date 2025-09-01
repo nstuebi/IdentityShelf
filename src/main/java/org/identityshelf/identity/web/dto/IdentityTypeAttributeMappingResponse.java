@@ -32,10 +32,10 @@ public class IdentityTypeAttributeMappingResponse {
     
     public static IdentityTypeAttributeMappingResponse from(IdentityTypeAttributeMapping mapping) {
         return new IdentityTypeAttributeMappingResponse(
-                mapping.getId().toString(),
-                mapping.getIdentityType().getId().toString(),
+                mapping.getUuid().toString(),
+                mapping.getIdentityType().getUuid().toString(),
                 mapping.getIdentityType().getName(),
-                mapping.getAttributeType().getId().toString(),
+                mapping.getAttributeType().getUuid().toString(),
                 mapping.getAttributeType().getName(),
                 mapping.getAttributeType().getDisplayName(),
                 mapping.getAttributeType().getDescription(),

@@ -63,7 +63,7 @@ public class IdentityService {
 
             // Get attribute mappings for validation
             List<IdentityTypeAttributeMapping> mappings = mappingRepository
-                .findActiveByIdentityTypeWithAttributeType(identityType.getId());
+                .findActiveByIdentityTypeWithAttributeType(identityType.getUuid());
             
             // Validate the request
             ValidationResult validationResult = validationService.validateIdentity(request, mappings);
@@ -111,13 +111,13 @@ public class IdentityService {
                     identityValue.setValue(value != null ? value : mapping.getEffectiveDefaultValue());
                     identity.addValue(identityValue);
                     logger.debug("Added attribute value: {} = {} (AttributeType: {})", 
-                        mapping.getAttributeType().getName(), value, mapping.getAttributeType().getId());
+                        mapping.getAttributeType().getName(), value, mapping.getAttributeType().getUuid());
                 }
             }
 
             logger.debug("Saving identity: {}", identity);
             Identity saved = identityRepository.save(identity);
-            logger.info("Successfully created identity with ID: {}", saved.getId());
+            logger.info("Successfully created identity with ID: {}", saved.getUuid());
             return toResponse(saved);
         } catch (Exception e) {
             logger.error("Error creating identity: {}", e.getMessage(), e);
@@ -142,14 +142,14 @@ public class IdentityService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Identity not found"));
 
         if (request.getUsername() != null && !request.getUsername().equals(identity.getUsername())) {
-            if (identityRepository.existsByUsernameAndIdNot(request.getUsername(), id)) {
+            if (identityRepository.existsByUsernameAndUuidNot(request.getUsername(), id)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
             }
             identity.setUsername(request.getUsername());
         }
 
         if (request.getEmail() != null && !request.getEmail().equals(identity.getEmail())) {
-            if (identityRepository.existsByEmailAndIdNot(request.getEmail(), id)) {
+            if (identityRepository.existsByEmailAndUuidNot(request.getEmail(), id)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
             }
             identity.setEmail(request.getEmail());
@@ -184,11 +184,11 @@ public class IdentityService {
         Map<String, Object> attributesMap = identity.getValues().stream()
             .filter(v -> {
                 if (v.getAttributeType() == null) {
-                    logger.warn("Found IdentityAttributeValue with null AttributeType: {}", v.getId());
+                    logger.warn("Found IdentityAttributeValue with null AttributeType: {}", v.getUuid());
                     return false;
                 }
                 if (v.getAttributeType().getName() == null) {
-                    logger.warn("Found AttributeType with null name: {}", v.getAttributeType().getId());
+                    logger.warn("Found AttributeType with null name: {}", v.getAttributeType().getUuid());
                     return false;
                 }
                 return true;
@@ -202,7 +202,7 @@ public class IdentityService {
         logger.debug("Created attributes map with {} entries", attributesMap.size());
             
         return new IdentityResponse(
-            identity.getId(),
+            identity.getUuid(),
             identity.getUsername(),
             identity.getEmail(),
             identity.getDisplayName(),

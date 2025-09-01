@@ -89,7 +89,7 @@ public class AttributeTypeController {
     
     private AttributeTypeResponse toResponse(AttributeType attributeType) {
         return new AttributeTypeResponse(
-            attributeType.getId().toString(),
+            attributeType.getUuid().toString(),
             attributeType.getName(),
             attributeType.getDisplayName(),
             attributeType.getDescription(),
