@@ -38,7 +38,7 @@ public class IdentityType {
     private OffsetDateTime updatedAt;
     
     @OneToMany(mappedBy = "identityType", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AttributeType> attributes = new ArrayList<>();
+    private List<IdentityTypeAttributeMapping> attributeMappings = new ArrayList<>();
     
     // JPA lifecycle methods
     @PrePersist
@@ -52,14 +52,20 @@ public class IdentityType {
         updatedAt = OffsetDateTime.now();
     }
     
-    // Helper methods
-    public void addAttribute(AttributeType attribute) {
-        attributes.add(attribute);
-        attribute.setIdentityType(this);
+    // Helper methods for attribute mappings
+    public void addAttributeMapping(IdentityTypeAttributeMapping mapping) {
+        attributeMappings.add(mapping);
+        mapping.setIdentityType(this);
     }
 
-    public void removeAttribute(AttributeType attribute) {
-        attributes.remove(attribute);
-        attribute.setIdentityType(null);
+    public void removeAttributeMapping(IdentityTypeAttributeMapping mapping) {
+        attributeMappings.remove(mapping);
+        mapping.setIdentityType(null);
+    }
+    
+    public IdentityTypeAttributeMapping addAttribute(AttributeType attribute, int sortOrder, boolean required) {
+        IdentityTypeAttributeMapping mapping = new IdentityTypeAttributeMapping(this, attribute, sortOrder, required);
+        addAttributeMapping(mapping);
+        return mapping;
     }
 }

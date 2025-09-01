@@ -1,10 +1,10 @@
 package org.identityshelf.identity.service;
 
-import org.identityshelf.identity.domain.AttributeType;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.identityshelf.identity.domain.IdentityTypeAttributeMapping;
 import org.identityshelf.identity.web.dto.CreateIdentityRequest;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,21 +12,21 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class IdentityValidationService {
     
-    private static final Logger logger = LoggerFactory.getLogger(IdentityValidationService.class);
-    
-    public ValidationResult validateIdentity(CreateIdentityRequest request, List<AttributeType> attributeTypes) {
+    public ValidationResult validateIdentity(CreateIdentityRequest request, List<IdentityTypeAttributeMapping> mappings) {
         List<ValidationError> errors = new ArrayList<>();
         
         // Validate all required attributes first
-        for (AttributeType attributeType : attributeTypes) {
-            if (attributeType.isRequired()) {
+        for (IdentityTypeAttributeMapping mapping : mappings) {
+            if (mapping.isRequired()) {
                 Object value = request.getAttributes() != null ? 
-                    request.getAttributes().get(attributeType.getName()) : null;
+                    request.getAttributes().get(mapping.getAttributeType().getName()) : null;
                 if (value == null || value.toString().trim().isEmpty()) {
-                    errors.add(new ValidationError(attributeType.getName(), 
-                        "Field '" + attributeType.getDisplayName() + "' is required"));
+                    errors.add(new ValidationError(mapping.getAttributeType().getName(), 
+                        "Field '" + mapping.getAttributeType().getDisplayName() + "' is required"));
                 }
             }
         }
@@ -36,27 +36,27 @@ public class IdentityValidationService {
             for (Map.Entry<String, Object> entry : request.getAttributes().entrySet()) {
                 String attributeName = entry.getKey();
                 Object value = entry.getValue();
-                validateField(attributeName, value != null ? value.toString() : null, attributeTypes, errors);
+                validateField(attributeName, value != null ? value.toString() : null, mappings, errors);
             }
         }
         
         return new ValidationResult(errors.isEmpty(), errors);
     }
     
-    private void validateField(String fieldName, String value, List<AttributeType> attributeTypes, List<ValidationError> errors) {
-        AttributeType attributeType = attributeTypes.stream()
-            .filter(at -> at.getName().equals(fieldName))
+    private void validateField(String fieldName, String value, List<IdentityTypeAttributeMapping> mappings, List<ValidationError> errors) {
+        IdentityTypeAttributeMapping mapping = mappings.stream()
+            .filter(m -> m.getAttributeType().getName().equals(fieldName))
             .findFirst()
             .orElse(null);
             
-        if (attributeType == null) {
-            // Field not defined in attribute types, skip validation
+        if (mapping == null) {
+            // Field not defined in mappings, skip validation
             return;
         }
         
         // Required field validation
-        if (attributeType.isRequired() && (value == null || value.trim().isEmpty())) {
-            errors.add(new ValidationError(fieldName, "Field '" + attributeType.getDisplayName() + "' is required"));
+        if (mapping.isRequired() && (value == null || value.trim().isEmpty())) {
+            errors.add(new ValidationError(fieldName, "Field '" + mapping.getAttributeType().getDisplayName() + "' is required"));
             return;
         }
         
@@ -65,16 +65,40 @@ public class IdentityValidationService {
             return;
         }
         
-        // Regex validation
-        if (attributeType.getValidationRegex() != null && !attributeType.getValidationRegex().trim().isEmpty()) {
+        // Cumulative regex validation - both base and override must match
+        validateCumulativeRegex(fieldName, value, mapping, errors);
+    }
+    
+    /**
+     * Validates value against cumulative regex rules (both base attribute and mapping override)
+     */
+    private void validateCumulativeRegex(String fieldName, String value, IdentityTypeAttributeMapping mapping, List<ValidationError> errors) {
+        // Validate against base attribute regex if present
+        String baseRegex = mapping.getAttributeType().getValidationRegex();
+        if (baseRegex != null && !baseRegex.trim().isEmpty()) {
             try {
-                Pattern pattern = Pattern.compile(attributeType.getValidationRegex());
+                Pattern pattern = Pattern.compile(baseRegex);
                 if (!pattern.matcher(value).matches()) {
                     errors.add(new ValidationError(fieldName, 
-                        attributeType.getDisplayName() + " format is invalid"));
+                        mapping.getAttributeType().getDisplayName() + " format is invalid (base rule)"));
+                    return; // Don't continue if base validation fails
                 }
             } catch (Exception e) {
-                logger.warn("Invalid regex pattern for attribute {}: {}", fieldName, attributeType.getValidationRegex());
+                log.warn("Invalid base regex pattern for attribute {}: {}", fieldName, baseRegex);
+            }
+        }
+        
+        // Additionally validate against override regex if present
+        String overrideRegex = mapping.getOverrideValidationRegex();
+        if (overrideRegex != null && !overrideRegex.trim().isEmpty()) {
+            try {
+                Pattern pattern = Pattern.compile(overrideRegex);
+                if (!pattern.matcher(value).matches()) {
+                    errors.add(new ValidationError(fieldName, 
+                        mapping.getAttributeType().getDisplayName() + " format is invalid (additional rule)"));
+                }
+            } catch (Exception e) {
+                log.warn("Invalid override regex pattern for attribute {}: {}", fieldName, overrideRegex);
             }
         }
     }
