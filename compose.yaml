@@ -10,34 +10,49 @@ services:
       - "5431:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U identityshelf -d identityshelf"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
     container_name: identityshelf-app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/identityshelf
       SPRING_DATASOURCE_USERNAME: identityshelf
       SPRING_DATASOURCE_PASSWORD: identityshelf
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_FLYWAY_ENABLED: 'true'
+      SPRING_DOCKER_COMPOSE_ENABLED: 'false'
       LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_ORG_IDENTITYSHELF: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB: DEBUG
-      LOGGING_LEVEL_ORG_HIBERNATE_SQL: DEBUG
-      LOGGING_LEVEL_ORG_HIBERNATE_TYPE_DESCRIPTOR_SQL: TRACE
     ports:
       - "8080:8080"
-      - "5005:5005"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   frontend:
     build: ./admin-frontend
     container_name: identityshelf-frontend
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     ports:
       - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   db_data:

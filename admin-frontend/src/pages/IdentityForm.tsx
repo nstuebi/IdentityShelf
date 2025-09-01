@@ -9,6 +9,8 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   const [identityTypes, setIdentityTypes] = useState<IdentityType[]>([])
   const [attributes, setAttributes] = useState<AttributeType[]>([])
   const [attributeValues, setAttributeValues] = useState<Record<string, any>>({})
+  const [displayName, setDisplayName] = useState<string>('')
+  const [status, setStatus] = useState<string>('ACTIVE')
   const [error, setError] = useState<string | null>(null)
   const [errorDetails, setErrorDetails] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -34,6 +36,10 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
           
           // Populate the form with existing attribute values
           setAttributeValues(identity.attributes)
+          
+          // Set the direct fields
+          setDisplayName(identity.displayName)
+          setStatus(identity.status)
         } catch (e) {
           setError(String(e))
         }
@@ -163,10 +169,16 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     
     try {
       if (mode === 'create') {
-        // Send all data as attributes - no hardcoded extraction
+        // Combine direct fields with dynamic attributes
+        const allAttributes = {
+          ...attributeValues,
+          display_name: displayName,
+          status: status
+        }
+        
         await createIdentity({ 
           identityType: selectedIdentityType,
-          attributes: attributeValues
+          attributes: allAttributes
         })
       } else if (id) {
         // For edit mode, we'll need to implement this properly
@@ -299,9 +311,42 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
         </label>
       )}
 
+      {selectedIdentityType && (
+        <div style={{ display: 'grid', gap: 16 }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Basic Information</h3>
+          
+          <label style={{ display: 'grid', gap: 4 }}>
+            <span style={{ fontWeight: 500 }}>Display Name *</span>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+              placeholder="Enter display name"
+              style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
+            />
+          </label>
+
+          <label style={{ display: 'grid', gap: 4 }}>
+            <span style={{ fontWeight: 500 }}>Status *</span>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              required
+              style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
+            >
+              <option value="ACTIVE">Active</option>
+              <option value="SUSPENDED">Suspended</option>
+              <option value="ARCHIVED">Archived</option>
+              <option value="ESTABLISHED">Established</option>
+            </select>
+          </label>
+        </div>
+      )}
+
       {selectedIdentityType && attributes.length > 0 && (
         <div style={{ display: 'grid', gap: 16 }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Identity Information</h3>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Identity Attributes</h3>
           <div style={{ display: 'grid', gap: 16 }}>
             {attributes
               .sort((a, b) => a.sortOrder - b.sortOrder)

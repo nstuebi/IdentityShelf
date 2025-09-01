@@ -42,8 +42,8 @@ export default function IdentitiesList() {
           <tr>
             <th style={th}>Username</th>
             <th style={th}>Email</th>
-            <th style={th}>First</th>
-            <th style={th}>Last</th>
+            <th style={th}>Display Name</th>
+            <th style={th}>Status</th>
             <th style={th}>Created</th>
             <th style={th}>Actions</th>
           </tr>
@@ -53,8 +53,19 @@ export default function IdentitiesList() {
             <tr key={i.id}>
               <td style={td}>{i.username}</td>
               <td style={td}>{i.email}</td>
-              <td style={td}>{i.firstName ?? ''}</td>
-              <td style={td}>{i.lastName ?? ''}</td>
+              <td style={td}>{i.displayName}</td>
+              <td style={td}>
+                <span style={{
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  fontSize: '0.75rem',
+                  background: getStatusColor(i.status),
+                  color: 'white',
+                  fontWeight: '500'
+                }}>
+                  {i.status}
+                </span>
+              </td>
               <td style={td}>{new Date(i.createdAt).toLocaleString()}</td>
               <td style={td}>
                 <Link to={`/${i.id}/edit`} style={{ marginRight: 8 }}>Edit</Link>
@@ -78,5 +89,20 @@ export default function IdentitiesList() {
 
 const th: React.CSSProperties = { textAlign: 'left', borderBottom: '1px solid #ddd', padding: 8, background: '#f3f4f6' }
 const td: React.CSSProperties = { borderBottom: '1px solid #eee', padding: 8 }
+
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'ACTIVE':
+      return '#059669'
+    case 'SUSPENDED':
+      return '#dc2626'
+    case 'ARCHIVED':
+      return '#6b7280'
+    case 'ESTABLISHED':
+      return '#2563eb'
+    default:
+      return '#6b7280'
+  }
+}
 
 

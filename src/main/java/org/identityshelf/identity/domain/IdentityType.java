@@ -1,12 +1,18 @@
 package org.identityshelf.identity.domain;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "identity_types")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class IdentityType {
     
     @Id
@@ -46,80 +52,6 @@ public class IdentityType {
         updatedAt = OffsetDateTime.now();
     }
     
-    // Constructors
-    public IdentityType() {}
-    
-    public IdentityType(String name, String displayName, String description) {
-        this.name = name;
-        this.displayName = displayName;
-        this.description = description;
-    }
-    
-    // Getters and Setters
-    public String getId() {
-        return id;
-    }
-    
-    public void setId(String id) {
-        this.id = id;
-    }
-    
-    public String getName() {
-        return name;
-    }
-    
-    public void setName(String name) {
-        this.name = name;
-    }
-    
-    public String getDisplayName() {
-        return displayName;
-    }
-    
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-    
-    public String getDescription() {
-        return description;
-    }
-    
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    
-    public boolean isActive() {
-        return active;
-    }
-    
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-    
-    public OffsetDateTime getCreatedAt() {
-        return createdAt;
-    }
-    
-    public void setCreatedAt(OffsetDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-    
-    public OffsetDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    
-    public void setUpdatedAt(OffsetDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-    
-        public List<AttributeType> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(List<AttributeType> attributes) {
-        this.attributes = attributes;
-    }
-
     // Helper methods
     public void addAttribute(AttributeType attribute) {
         attributes.add(attribute);

@@ -11,11 +11,10 @@ public class UpdateIdentityRequest {
     @Size(max = 320)
     private String email;
 
-    @Size(max = 100)
-    private String firstName;
+    @Size(max = 255)
+    private String displayName;
 
-    @Size(max = 100)
-    private String lastName;
+    private String status;
 
     public String getUsername() {
         return username;
@@ -33,20 +32,20 @@ public class UpdateIdentityRequest {
         this.email = email;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
-    public String getLastName() {
-        return lastName;
+    public String getStatus() {
+        return status;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setStatus(String status) {
+        this.status = status;
     }
 }
 

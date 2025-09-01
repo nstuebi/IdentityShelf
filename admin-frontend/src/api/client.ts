@@ -2,8 +2,8 @@ export interface Identity {
   id: string
   username: string
   email: string
-  firstName?: string
-  lastName?: string
+  displayName: string
+  status: string
   identityType: string
   attributes: Record<string, any>
   createdAt: string

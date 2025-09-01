@@ -9,6 +9,7 @@ import org.identityshelf.identity.domain.Identity;
 import org.identityshelf.identity.domain.IdentityType;
 import org.identityshelf.identity.domain.AttributeType;
 import org.identityshelf.identity.domain.IdentityAttributeValue;
+import org.identityshelf.identity.domain.IdentityStatus;
 import org.identityshelf.identity.repository.IdentityRepository;
 import org.identityshelf.identity.repository.IdentityTypeRepository;
 import org.identityshelf.identity.repository.AttributeTypeRepository;
@@ -75,8 +76,8 @@ public class IdentityService {
             Map<String, Object> attributes = request.getAttributes() != null ? request.getAttributes() : new HashMap<>();
             String username = (String) attributes.get("username");
             String email = (String) attributes.get("email");
-            String firstName = (String) attributes.get("first_name");
-            String lastName = (String) attributes.get("last_name");
+            String displayName = (String) attributes.get("display_name");
+            String statusStr = (String) attributes.get("status");
             
             // Check for duplicates
             if (username != null && identityRepository.existsByUsername(username)) {
@@ -91,8 +92,15 @@ public class IdentityService {
             Identity identity = new Identity();
             identity.setUsername(username);
             identity.setEmail(email);
-            identity.setFirstName(firstName);
-            identity.setLastName(lastName);
+            identity.setDisplayName(displayName != null ? displayName : username);
+            if (statusStr != null) {
+                try {
+                    identity.setStatus(IdentityStatus.valueOf(statusStr.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    logger.warn("Invalid status value: {}, using default ACTIVE", statusStr);
+                    identity.setStatus(IdentityStatus.ACTIVE);
+                }
+            }
             identity.setIdentityType(identityType);
 
             // Create and set attribute values
@@ -147,11 +155,15 @@ public class IdentityService {
             identity.setEmail(request.getEmail());
         }
 
-        if (request.getFirstName() != null) {
-            identity.setFirstName(request.getFirstName());
+        if (request.getDisplayName() != null) {
+            identity.setDisplayName(request.getDisplayName());
         }
-        if (request.getLastName() != null) {
-            identity.setLastName(request.getLastName());
+        if (request.getStatus() != null) {
+            try {
+                identity.setStatus(IdentityStatus.valueOf(request.getStatus().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status value: " + request.getStatus());
+            }
         }
 
         Identity saved = identityRepository.save(identity);
@@ -193,8 +205,8 @@ public class IdentityService {
             identity.getId(),
             identity.getUsername(),
             identity.getEmail(),
-            identity.getFirstName(),
-            identity.getLastName(),
+            identity.getDisplayName(),
+            identity.getStatus().toString(),
             identity.getCreatedAt(),
             identity.getUpdatedAt(),
             identity.getIdentityType() != null ? identity.getIdentityType().getName() : "DEFAULT",

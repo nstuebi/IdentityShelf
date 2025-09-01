@@ -1,0 +1,36 @@
+---
+alwaysApply: true
+---
+# Lombok Best Practices für IdentityShelf
+lombok_annotations:
+  entities:
+    - "@Data"           # Getter, Setter, toString, equals, hashCode
+    - "@NoArgsConstructor"  # JPA-Requirement
+    - "@EqualsAndHashCode(exclude = {'id', 'createdAt', 'updatedAt'})"  # JPA-sicher
+  
+  dtos:
+    - "@Data"           # Vollständige Funktionalität
+    - "@AllArgsConstructor"  # Für Builder-Pattern
+  
+  services:
+    - "@Slf4j"          # Logger
+    - "@RequiredArgsConstructor"  # Constructor injection
+  
+  controllers:
+    - "@Slf4j"          # Logger
+    - "@RequiredArgsConstructor"  # Constructor injection
+
+# Ausnahmen (nicht mit Lombok optimieren):
+exclude_from_lombok:
+  - Klassen mit komplexer Business-Logik
+  - Klassen mit @PrePersist/@PreUpdate
+  - Klassen mit custom equals/hashCode
+  - Klassen mit Builder-Pattern
+
+# Lombok-Prioritäten:
+priority_order:
+  1. "@Data" für einfache Klassen
+  2. "@Getter/@Setter" für spezifische Bedürfnisse
+  3. "@NoArgsConstructor" für JPA-Entities
+  4. "@AllArgsConstructor" für DTOs
+  5. "@Slf4j" für Services/Controllers

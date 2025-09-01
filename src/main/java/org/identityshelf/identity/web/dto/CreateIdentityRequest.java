@@ -31,12 +31,12 @@ public class CreateIdentityRequest {
         return attributes != null ? (String) attributes.get("email") : null; 
     }
     
-    public String getFirstName() { 
-        return attributes != null ? (String) attributes.get("first_name") : null; 
+    public String getDisplayName() { 
+        return attributes != null ? (String) attributes.get("display_name") : null; 
     }
     
-    public String getLastName() { 
-        return attributes != null ? (String) attributes.get("last_name") : null; 
+    public String getStatus() { 
+        return attributes != null ? (String) attributes.get("status") : null; 
     }
 }
 

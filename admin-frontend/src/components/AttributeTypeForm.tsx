@@ -10,17 +10,7 @@ const DATA_TYPES = [
   'STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'DATE', 'DATETIME', 'EMAIL', 'PHONE', 'URL', 'SELECT', 'MULTI_SELECT'
 ]
 
-// Common regex patterns for different data types
-const COMMON_REGEX_PATTERNS = {
-  'Username': '^[a-zA-Z0-9_]{3,20}$',
-  'Email': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-  'Phone': '^\\+?[\\d\\s\\-\\(\\)]{7,20}$',
-  'URL': '^https?:\\/\\/[^\\s\\/$.?#].[^\\s]*$',
-  'Date (YYYY-MM-DD)': '^\\d{4}-\\d{2}-\\d{2}$',
-  'Time (HH:MM)': '^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
-  'Postal Code (US)': '^\\d{5}(-\\d{4})?$',
-  'Credit Card': '^\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}[\\s-]?\\d{4}$'
-}
+
 
 export default function AttributeTypeForm({ attributes, onAttributesChange }: AttributeTypeFormProps) {
   const [showForm, setShowForm] = useState(false)
@@ -63,10 +53,7 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
     }
   }
 
-  // Apply common regex pattern
-  const applyCommonPattern = (pattern: string) => {
-    setFormData({ ...formData, validationRegex: pattern })
-  }
+
 
   // Clear regex test results when regex changes
   const handleRegexChange = (value: string) => {
@@ -346,33 +333,7 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
                 />
               </div>
               
-              {/* Common regex patterns */}
-              <div style={{ marginBottom: '12px' }}>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>
-                  Common patterns:
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {Object.entries(COMMON_REGEX_PATTERNS).map(([name, pattern]) => (
-                    <button
-                      key={name}
-                      type="button"
-                      onClick={() => applyCommonPattern(pattern)}
-                      style={{
-                        background: '#f3f4f6',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '4px',
-                        padding: '4px 8px',
-                        fontSize: '0.75rem',
-                        cursor: 'pointer',
-                        color: '#374151'
-                      }}
-                      title={pattern}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+
 
               {/* Regex testing */}
               {formData.validationRegex && (
@@ -428,10 +389,28 @@ export default function AttributeTypeForm({ attributes, onAttributesChange }: At
                 </div>
               )}
 
-              {/* Help text */}
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                <strong>Regex tips:</strong> Use ^ and $ for exact matches, [a-z] for character ranges, 
-                {'{3,20}'} for length limits, \d for digits, \w for word characters.
+              {/* Enhanced help text with examples */}
+              <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '8px' }}>
+                <div style={{ marginBottom: '6px' }}>
+                  <strong>Common regex examples:</strong>
+                </div>
+                <div style={{ 
+                  fontFamily: 'monospace', 
+                  background: '#f9fafb', 
+                  padding: '8px', 
+                  borderRadius: '4px',
+                  border: '1px solid #e5e7eb',
+                  marginBottom: '6px'
+                }}>
+                  <div>• Username: <code>^[a-zA-Z0-9_]{'{3,20}'}$</code></div>
+                  <div>• Email: <code>^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{'{2,}'}$</code></div>
+                  <div>• Phone: <code>^\+?[\d\s\-\(\)]{'{7,20}'}$</code></div>
+                  <div>• Date (YYYY-MM-DD): <code>^\d{'{4}'}-\d{'{2}'}-\d{'{2}'}$</code></div>
+                  <div>• Postal Code: <code>^\d{'{5}'}(-\d{'{4}'})?$</code></div>
+                </div>
+                <div>
+                  <strong>Tips:</strong> Use ^ and $ for exact matches, [a-z] for ranges, {'{3,20}'} for length, \d for digits, \w for word characters.
+                </div>
               </div>
             </div>
           </div>
