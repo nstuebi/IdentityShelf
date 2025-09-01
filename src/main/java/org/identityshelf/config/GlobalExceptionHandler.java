@@ -12,8 +12,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.identityshelf.identity.exception.ValidationException;
-import org.identityshelf.identity.service.IdentityValidationService.ValidationError;
-import java.util.List;
+
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

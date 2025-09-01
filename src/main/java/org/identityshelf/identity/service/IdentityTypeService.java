@@ -1,9 +1,9 @@
 package org.identityshelf.identity.service;
 
 import org.identityshelf.identity.domain.IdentityType;
-import org.identityshelf.identity.domain.AttributeType;
+import org.identityshelf.identity.domain.IdentityTypeAttributeMapping;
 import org.identityshelf.identity.repository.IdentityTypeRepository;
-import org.identityshelf.identity.repository.AttributeTypeRepository;
+import org.identityshelf.identity.repository.IdentityTypeAttributeMappingRepository;
 import org.identityshelf.identity.web.dto.IdentityTypeResponse;
 import org.identityshelf.identity.web.dto.AttributeTypeResponse;
 import org.springframework.stereotype.Service;
@@ -21,14 +21,14 @@ public class IdentityTypeService {
     private static final Logger logger = LoggerFactory.getLogger(IdentityTypeService.class);
     
     private final IdentityTypeRepository identityTypeRepository;
-        private final AttributeTypeRepository attributeTypeRepository;
+    private final IdentityTypeAttributeMappingRepository mappingRepository;
 
     public IdentityTypeService(
         IdentityTypeRepository identityTypeRepository,
-        AttributeTypeRepository attributeTypeRepository
+        IdentityTypeAttributeMappingRepository mappingRepository
     ) {
         this.identityTypeRepository = identityTypeRepository;
-        this.attributeTypeRepository = attributeTypeRepository;
+        this.mappingRepository = mappingRepository;
     }
     
     @Transactional(readOnly = true)
@@ -51,17 +51,24 @@ public class IdentityTypeService {
     @Transactional(readOnly = true)
     public List<AttributeTypeResponse> getAttributesForType(String typeName) {
         logger.debug("Fetching attributes for identity type: {}", typeName);
-        List<AttributeType> attributes = attributeTypeRepository
-            .findByIdentityTypeNameAndActiveTrueOrderBySortOrder(typeName);
-        return attributes.stream()
-            .map(this::toAttributeResponse)
+        IdentityType type = identityTypeRepository.findByName(typeName)
+            .orElseThrow(() -> new RuntimeException("Identity type not found: " + typeName));
+        
+        List<IdentityTypeAttributeMapping> mappings = mappingRepository
+            .findActiveByIdentityTypeWithAttributeType(type.getId());
+        
+        return mappings.stream()
+            .map(this::toAttributeResponseFromMapping)
             .collect(Collectors.toList());
     }
     
     private IdentityTypeResponse toResponse(IdentityType type) {
-        List<AttributeTypeResponse> attributes = type.getAttributes().stream()
-            .filter(AttributeType::isActive)
-            .map(this::toAttributeResponse)
+        // Get mappings for this identity type
+        List<IdentityTypeAttributeMapping> mappings = mappingRepository
+            .findActiveByIdentityTypeWithAttributeType(type.getId());
+        
+        List<AttributeTypeResponse> attributes = mappings.stream()
+            .map(this::toAttributeResponseFromMapping)
             .collect(Collectors.toList());
             
         return new IdentityTypeResponse(
@@ -76,20 +83,20 @@ public class IdentityTypeService {
         );
     }
     
-    private AttributeTypeResponse toAttributeResponse(AttributeType attribute) {
+    private AttributeTypeResponse toAttributeResponseFromMapping(IdentityTypeAttributeMapping mapping) {
         return new AttributeTypeResponse(
-            attribute.getId(),
-            attribute.getName(),
-            attribute.getDisplayName(),
-            attribute.getDescription(),
-            attribute.getDataType().name(),
-            attribute.isRequired(),
-            attribute.getDefaultValue(),
-            attribute.getValidationRegex(),
-            attribute.getSortOrder(),
-            attribute.isActive(),
-            attribute.getCreatedAt(),
-            attribute.getUpdatedAt()
+            mapping.getAttributeType().getId(),
+            mapping.getAttributeType().getName(),
+            mapping.getAttributeType().getDisplayName(),
+            mapping.getAttributeType().getDescription(),
+            mapping.getAttributeType().getDataType().name(),
+            mapping.isRequired(), // From mapping
+            mapping.getEffectiveDefaultValue(), // Effective value with overrides
+            mapping.getEffectiveValidationRegex(), // Effective regex with overrides
+            mapping.getSortOrder(), // From mapping
+            mapping.isActive(),
+            mapping.getAttributeType().getCreatedAt(),
+            mapping.getAttributeType().getUpdatedAt()
         );
     }
 }

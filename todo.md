@@ -9,11 +9,18 @@ TODO for MVP:
 
 
 - introduce empty db / load config via dsl/configuration
+
 - design decision: should an attribute be identity type specific, or should it be separate and share the common definition for all attributes => decision, lets have a base definition (with minimum requirements) and type specific overrides for max length / validation / generation rules / lookups
 prompt: currently the AttributeType does link to the IdentityType, i like to enhance the model so that we can have an n:m relationship between the attribute and identity type. Meaning the AttributeType can be defined as separate object, and just mapped to the identity type as part of the identity type definition. Additonally the mapping should allow to have type specific overrides for the validation regex, the default_value. the sort order and the is_required flag should only be present on the mapping table. The overrides must behave cumulative, meaning on validations always both rules need to be evaluated and "matched"
+
+
+- I like to use groovy scripts througout the application. I like to have the scripts stored on the database on a table called SystemConfigScript. On Application Bootup, scripts from the Build should be automatically copied into the table, in case the config from the build is newer than the config on the database and the config on the database still has the same checksum as per the previous build. In case the checksum is not identical, no update on the database should be done and an Alert in the log should be generated, stating that the script couldnt be updated, as it is not in expected state. The table should have a script uuid and a scriptKey, a script Description and a ScriptContent Column. The ScriptKey must be unique, as this will be the key used within the code to reference it. The Scripts mechanism should allow to change and reload the scripts during runtime over an admin-ui component. There should be a configuration on the script, if it should be held in cache or only loaded on the fly when called, as some scripts would be heavily used (where caching is important), while others are seldomely used.
+
+
 - Add some additional use cases for the attribute values in terms of lifecycle manamgent: AllowSetOnCreate: true/false,DefaultValue:based on groovy script, AllowUpdate:true/false 
 
-
+- config managemnt:
+ok, i would be interested in -> load values from local file, check on database for overrides and apply overrides if necessary. there should be a regular pull to check if any new db override has been made and auto reload, however as well an option to force reload. I like to have the Admin-UI extended with a section to show all Configuration Entries, if they are overriden and allow the values to be changed. The whole configuration should be cached in Memory for fast access throughout the application.
 
 
 
@@ -51,6 +58,7 @@ prompt: currently the AttributeType does link to the IdentityType, i like to enh
 
 - introduce sql console / reporting
 - introduce bulk changes
+
 
 - add unit testing
     - prevent updating the identity type on an identity

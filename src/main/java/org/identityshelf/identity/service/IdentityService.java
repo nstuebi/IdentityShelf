@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.stream.Collectors;
 import org.identityshelf.identity.domain.Identity;
 import org.identityshelf.identity.domain.IdentityType;
-import org.identityshelf.identity.domain.AttributeType;
+import org.identityshelf.identity.domain.IdentityTypeAttributeMapping;
 import org.identityshelf.identity.domain.IdentityAttributeValue;
 import org.identityshelf.identity.domain.IdentityStatus;
 import org.identityshelf.identity.repository.IdentityRepository;
 import org.identityshelf.identity.repository.IdentityTypeRepository;
-import org.identityshelf.identity.repository.AttributeTypeRepository;
+import org.identityshelf.identity.repository.IdentityTypeAttributeMappingRepository;
 import org.identityshelf.identity.web.dto.CreateIdentityRequest;
 import org.identityshelf.identity.web.dto.IdentityResponse;
 import org.identityshelf.identity.web.dto.UpdateIdentityRequest;
@@ -37,18 +37,18 @@ public class IdentityService {
 
     private final IdentityRepository identityRepository;
     private final IdentityTypeRepository identityTypeRepository;
-    private final AttributeTypeRepository attributeTypeRepository;
+    private final IdentityTypeAttributeMappingRepository mappingRepository;
     private final IdentityValidationService validationService;
 
     public IdentityService(
         IdentityRepository identityRepository,
         IdentityTypeRepository identityTypeRepository,
-        AttributeTypeRepository attributeTypeRepository,
+        IdentityTypeAttributeMappingRepository mappingRepository,
         IdentityValidationService validationService
     ) {
         this.identityRepository = identityRepository;
         this.identityTypeRepository = identityTypeRepository;
-        this.attributeTypeRepository = attributeTypeRepository;
+        this.mappingRepository = mappingRepository;
         this.validationService = validationService;
     }
 
@@ -61,12 +61,12 @@ public class IdentityService {
             IdentityType identityType = identityTypeRepository.findById(request.getIdentityType())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid identity type ID: " + request.getIdentityType()));
 
-            // Get attribute types for validation
-            List<AttributeType> attributeTypes = attributeTypeRepository
-                .findByIdentityTypeIdAndActiveTrueOrderBySortOrder(identityType.getId());
+            // Get attribute mappings for validation
+            List<IdentityTypeAttributeMapping> mappings = mappingRepository
+                .findActiveByIdentityTypeWithAttributeType(identityType.getId());
             
             // Validate the request
-            ValidationResult validationResult = validationService.validateIdentity(request, attributeTypes);
+            ValidationResult validationResult = validationService.validateIdentity(request, mappings);
             if (!validationResult.isValid()) {
                 logger.warn("Validation failed for identity creation: {}", validationResult.getErrors());
                 throw new ValidationException("Validation failed", validationResult.getErrors());
