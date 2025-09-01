@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "identity_types")
@@ -17,7 +18,8 @@ public class IdentityType {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @Column(columnDefinition = "uuid")
+    private UUID id;
     
     @Column(name = "name", nullable = false, unique = true)
     private String name;

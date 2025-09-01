@@ -72,7 +72,7 @@ public class IdentityTypeService {
             .collect(Collectors.toList());
             
         return new IdentityTypeResponse(
-            type.getId(),
+            type.getId().toString(),
             type.getName(),
             type.getDisplayName(),
             type.getDescription(),
@@ -85,7 +85,7 @@ public class IdentityTypeService {
     
     private AttributeTypeResponse toAttributeResponseFromMapping(IdentityTypeAttributeMapping mapping) {
         return new AttributeTypeResponse(
-            mapping.getAttributeType().getId(),
+            mapping.getAttributeType().getId().toString(),
             mapping.getAttributeType().getName(),
             mapping.getAttributeType().getDisplayName(),
             mapping.getAttributeType().getDescription(),

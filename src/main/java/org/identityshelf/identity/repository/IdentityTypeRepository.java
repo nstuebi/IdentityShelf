@@ -7,15 +7,16 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface IdentityTypeRepository extends JpaRepository<IdentityType, String> {
+public interface IdentityTypeRepository extends JpaRepository<IdentityType, UUID> {
     
     Optional<IdentityType> findByName(String name);
     
     List<IdentityType> findByActiveTrue();
     
-    @Query("SELECT it FROM IdentityType it LEFT JOIN FETCH it.attributes WHERE it.active = true ORDER BY it.displayName")
+    @Query("SELECT it FROM IdentityType it LEFT JOIN FETCH it.attributeMappings WHERE it.active = true ORDER BY it.displayName")
     List<IdentityType> findActiveTypesWithAttributes();
     
     boolean existsByName(String name);

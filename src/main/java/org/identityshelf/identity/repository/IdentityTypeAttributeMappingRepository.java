@@ -8,27 +8,29 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface IdentityTypeAttributeMappingRepository extends JpaRepository<IdentityTypeAttributeMapping, String> {
+public interface IdentityTypeAttributeMappingRepository extends JpaRepository<IdentityTypeAttributeMapping, UUID> {
     
-    List<IdentityTypeAttributeMapping> findByIdentityTypeIdAndActiveTrue(String identityTypeId);
+    List<IdentityTypeAttributeMapping> findByIdentityTypeIdAndActiveTrue(UUID identityTypeId);
     
-    List<IdentityTypeAttributeMapping> findByAttributeTypeIdAndActiveTrue(String attributeTypeId);
+    List<IdentityTypeAttributeMapping> findByAttributeTypeIdAndActiveTrue(UUID attributeTypeId);
     
     Optional<IdentityTypeAttributeMapping> findByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(
-            String identityTypeId, String attributeTypeId);
+            UUID identityTypeId, UUID attributeTypeId);
     
     @Query("SELECT m FROM IdentityTypeAttributeMapping m " +
            "WHERE m.identityType.id = :identityTypeId AND m.active = true " +
            "ORDER BY m.sortOrder ASC")
-    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeOrderBySortOrder(@Param("identityTypeId") String identityTypeId);
+    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeOrderBySortOrder(@Param("identityTypeId") UUID identityTypeId);
     
     @Query("SELECT m FROM IdentityTypeAttributeMapping m " +
            "JOIN FETCH m.attributeType " +
+           "JOIN FETCH m.identityType " +
            "WHERE m.identityType.id = :identityTypeId AND m.active = true " +
            "ORDER BY m.sortOrder ASC")
-    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeWithAttributeType(@Param("identityTypeId") String identityTypeId);
+    List<IdentityTypeAttributeMapping> findActiveByIdentityTypeWithAttributeType(@Param("identityTypeId") UUID identityTypeId);
     
-    boolean existsByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(String identityTypeId, String attributeTypeId);
+    boolean existsByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(UUID identityTypeId, UUID attributeTypeId);
 }

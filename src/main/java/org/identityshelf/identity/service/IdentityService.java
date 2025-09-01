@@ -58,7 +58,7 @@ public class IdentityService {
         
         try {
             // Get the identity type
-            IdentityType identityType = identityTypeRepository.findById(request.getIdentityType())
+            IdentityType identityType = identityTypeRepository.findById(UUID.fromString(request.getIdentityType()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid identity type ID: " + request.getIdentityType()));
 
             // Get attribute mappings for validation
@@ -103,15 +103,15 @@ public class IdentityService {
             }
             identity.setIdentityType(identityType);
 
-            // Create and set attribute values
-            for (AttributeType attribute : attributeTypes) {
-                Object value = attributes.get(attribute.getName());
-                if (value != null || attribute.isRequired()) {
-                    IdentityAttributeValue identityValue = new IdentityAttributeValue(identity, attribute);
-                    identityValue.setValue(value != null ? value : attribute.getDefaultValue());
+            // Create and set attribute values based on mappings
+            for (IdentityTypeAttributeMapping mapping : mappings) {
+                Object value = attributes.get(mapping.getAttributeType().getName());
+                if (value != null || mapping.isRequired()) {
+                    IdentityAttributeValue identityValue = new IdentityAttributeValue(identity, mapping.getAttributeType());
+                    identityValue.setValue(value != null ? value : mapping.getEffectiveDefaultValue());
                     identity.addValue(identityValue);
                     logger.debug("Added attribute value: {} = {} (AttributeType: {})", 
-                        attribute.getName(), value, attribute.getId());
+                        mapping.getAttributeType().getName(), value, mapping.getAttributeType().getId());
                 }
             }
 

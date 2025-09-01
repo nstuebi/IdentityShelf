@@ -2,9 +2,7 @@ package org.identityshelf.identity.service;
 
 import org.identityshelf.identity.domain.AttributeType;
 import org.identityshelf.identity.domain.AttributeDataType;
-import org.identityshelf.identity.domain.IdentityType;
 import org.identityshelf.identity.repository.AttributeTypeRepository;
-import org.identityshelf.identity.repository.IdentityTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,18 +19,20 @@ public class AttributeTypeService {
     
     private static final Logger logger = LoggerFactory.getLogger(AttributeTypeService.class);
     
-    private final AttributeTypeRepository attributeTypeRepository;
-    private final IdentityTypeRepository identityTypeRepository;
-    
-    public AttributeTypeService(AttributeTypeRepository attributeTypeRepository, 
-                               IdentityTypeRepository identityTypeRepository) {
+        private final AttributeTypeRepository attributeTypeRepository;
+
+    public AttributeTypeService(AttributeTypeRepository attributeTypeRepository) {
         this.attributeTypeRepository = attributeTypeRepository;
-        this.identityTypeRepository = identityTypeRepository;
+    }
+    
+    public List<AttributeType> getAllAttributeTypes() {
+        logger.debug("Fetching all attribute types");
+        return attributeTypeRepository.findByActiveTrueOrderByName();
     }
     
     public AttributeType getAttributeType(String id) {
         logger.debug("Fetching attribute type by ID: {}", id);
-        return attributeTypeRepository.findById(id)
+        return attributeTypeRepository.findById(UUID.fromString(id))
             .orElseThrow(() -> new RuntimeException("Attribute type not found: " + id));
     }
     
@@ -44,12 +44,9 @@ public class AttributeTypeService {
         String displayName = (String) request.get("displayName");
         String description = (String) request.get("description");
         String dataType = (String) request.get("dataType");
-        Boolean required = (Boolean) request.get("required");
         String defaultValue = (String) request.get("defaultValue");
         String validationRegex = (String) request.get("validationRegex");
-        Integer sortOrder = (Integer) request.get("sortOrder");
         Boolean active = (Boolean) request.get("active");
-        String identityTypeId = (String) request.get("identityTypeId");
         
         // Validate required fields
         if (name == null || name.trim().isEmpty()) {
@@ -61,33 +58,19 @@ public class AttributeTypeService {
         if (dataType == null || dataType.trim().isEmpty()) {
             throw new RuntimeException("Data type is required");
         }
-        if (identityTypeId == null || identityTypeId.trim().isEmpty()) {
-            throw new RuntimeException("Identity type ID is required");
-        }
         
-        // Check if identity type exists
-        IdentityType identityType = identityTypeRepository.findById(identityTypeId)
-            .orElseThrow(() -> new RuntimeException("Identity type not found: " + identityTypeId));
-        
-        // Check if attribute name already exists for this identity type
-        // TODO: Implement proper duplicate check
-        // For now, we'll allow duplicates and handle them at the database level
-        
-        // Create new attribute type
+        // Create new independent attribute type
         AttributeType attributeType = new AttributeType();
         attributeType.setName(name);
         attributeType.setDisplayName(displayName);
         attributeType.setDescription(description);
         attributeType.setDataType(AttributeDataType.valueOf(dataType.toUpperCase()));
-        attributeType.setRequired(required != null ? required : false);
         attributeType.setDefaultValue(defaultValue);
         attributeType.setValidationRegex(validationRegex);
-        attributeType.setSortOrder(sortOrder != null ? sortOrder : 0);
         attributeType.setActive(active != null ? active : true);
-        attributeType.setIdentityType(identityType);
         // Note: createdAt and updatedAt are automatically set by JPA lifecycle methods
         
-        logger.info("Created attribute type: {} for identity type: {}", name, identityType.getName());
+        logger.info("Created independent attribute type: {}", name);
         return attributeTypeRepository.save(attributeType);
     }
     
@@ -106,18 +89,14 @@ public class AttributeTypeService {
         if (request.containsKey("dataType")) {
             existingAttribute.setDataType(AttributeDataType.valueOf(((String) request.get("dataType")).toUpperCase()));
         }
-        if (request.containsKey("required")) {
-            existingAttribute.setRequired((Boolean) request.get("required"));
-        }
+
         if (request.containsKey("defaultValue")) {
             existingAttribute.setDefaultValue((String) request.get("defaultValue"));
         }
         if (request.containsKey("validationRegex")) {
             existingAttribute.setValidationRegex((String) request.get("validationRegex"));
         }
-        if (request.containsKey("sortOrder")) {
-            existingAttribute.setSortOrder((Integer) request.get("sortOrder"));
-        }
+
         if (request.containsKey("active")) {
             existingAttribute.setActive((Boolean) request.get("active"));
         }
@@ -136,12 +115,9 @@ public class AttributeTypeService {
         // Check if this attribute is used by any identities
         // TODO: Implement check for usage before deletion
         
-        attributeTypeRepository.deleteById(id);
+        attributeTypeRepository.deleteById(UUID.fromString(id));
         logger.info("Deleted attribute type: {}", id);
     }
     
-    public List<AttributeType> getAttributesByIdentityType(String identityTypeId) {
-        logger.debug("Fetching attributes for identity type: {}", identityTypeId);
-        return attributeTypeRepository.findActiveAttributesByTypeId(identityTypeId);
-    }
+
 }

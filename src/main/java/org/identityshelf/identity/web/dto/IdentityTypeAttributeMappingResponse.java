@@ -2,6 +2,7 @@ package org.identityshelf.identity.web.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.identityshelf.identity.domain.IdentityTypeAttributeMapping;
 import java.time.OffsetDateTime;
 
 @Data
@@ -28,4 +29,28 @@ public class IdentityTypeAttributeMappingResponse {
     private final String effectiveDefaultValue;
     private final String baseValidationRegex;
     private final String baseDefaultValue;
+    
+    public static IdentityTypeAttributeMappingResponse from(IdentityTypeAttributeMapping mapping) {
+        return new IdentityTypeAttributeMappingResponse(
+                mapping.getId().toString(),
+                mapping.getIdentityType().getId().toString(),
+                mapping.getIdentityType().getName(),
+                mapping.getAttributeType().getId().toString(),
+                mapping.getAttributeType().getName(),
+                mapping.getAttributeType().getDisplayName(),
+                mapping.getAttributeType().getDescription(),
+                mapping.getAttributeType().getDataType().name(),
+                mapping.getSortOrder(),
+                mapping.isRequired(),
+                mapping.getOverrideValidationRegex(),
+                mapping.getOverrideDefaultValue(),
+                mapping.isActive(),
+                mapping.getCreatedAt(),
+                mapping.getUpdatedAt(),
+                mapping.getEffectiveValidationRegex(),
+                mapping.getEffectiveDefaultValue(),
+                mapping.getAttributeType().getValidationRegex(),
+                mapping.getAttributeType().getDefaultValue()
+        );
+    }
 }

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "attribute_types")
@@ -15,7 +16,8 @@ public class AttributeType {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @Column(columnDefinition = "uuid")
+    private UUID id;
     
     @Column(name = "name", nullable = false)
     private String name;

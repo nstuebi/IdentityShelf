@@ -2,6 +2,7 @@ package org.identityshelf.identity.domain;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "identity_attribute_values")
@@ -9,7 +10,8 @@ public class IdentityAttributeValue {
     
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @Column(columnDefinition = "uuid")
+    private UUID id;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "identity_id", nullable = false)
@@ -61,11 +63,11 @@ public class IdentityAttributeValue {
     }
     
     // Getters and Setters
-    public String getId() {
+    public UUID getId() {
         return id;
     }
     
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
     

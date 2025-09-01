@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -25,29 +26,34 @@ public class IdentityTypeAttributeMappingService {
     private final AttributeTypeRepository attributeTypeRepository;
     
     public List<IdentityTypeAttributeMapping> getMappingsForIdentityType(String identityTypeId) {
-        return mappingRepository.findActiveByIdentityTypeWithAttributeType(identityTypeId);
+        return mappingRepository.findActiveByIdentityTypeWithAttributeType(UUID.fromString(identityTypeId));
     }
     
     public List<IdentityTypeAttributeMapping> getMappingsForAttributeType(String attributeTypeId) {
-        return mappingRepository.findByAttributeTypeIdAndActiveTrue(attributeTypeId);
+        return mappingRepository.findByAttributeTypeIdAndActiveTrue(UUID.fromString(attributeTypeId));
     }
     
     public Optional<IdentityTypeAttributeMapping> getMapping(String identityTypeId, String attributeTypeId) {
-        return mappingRepository.findByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(identityTypeId, attributeTypeId);
+        return mappingRepository.findByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(UUID.fromString(identityTypeId), UUID.fromString(attributeTypeId));
+    }
+    
+    public IdentityTypeAttributeMapping getMappingById(String mappingId) {
+        return mappingRepository.findById(UUID.fromString(mappingId))
+                .orElseThrow(() -> new IllegalArgumentException("Mapping not found: " + mappingId));
     }
     
     public IdentityTypeAttributeMapping createMapping(String identityTypeId, String attributeTypeId, 
                                                      int sortOrder, boolean required, 
                                                      String overrideValidationRegex, String overrideDefaultValue) {
         
-        IdentityType identityType = identityTypeRepository.findById(identityTypeId)
+        IdentityType identityType = identityTypeRepository.findById(UUID.fromString(identityTypeId))
                 .orElseThrow(() -> new IllegalArgumentException("Identity type not found: " + identityTypeId));
         
-        AttributeType attributeType = attributeTypeRepository.findById(attributeTypeId)
+        AttributeType attributeType = attributeTypeRepository.findById(UUID.fromString(attributeTypeId))
                 .orElseThrow(() -> new IllegalArgumentException("Attribute type not found: " + attributeTypeId));
         
         // Check if mapping already exists
-        if (mappingRepository.existsByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(identityTypeId, attributeTypeId)) {
+        if (mappingRepository.existsByIdentityTypeIdAndAttributeTypeIdAndActiveTrue(UUID.fromString(identityTypeId), UUID.fromString(attributeTypeId))) {
             throw new IllegalArgumentException("Mapping already exists between identity type and attribute type");
         }
         
@@ -68,7 +74,7 @@ public class IdentityTypeAttributeMappingService {
     public IdentityTypeAttributeMapping updateMapping(String mappingId, int sortOrder, boolean required, 
                                                      String overrideValidationRegex, String overrideDefaultValue) {
         
-        IdentityTypeAttributeMapping mapping = mappingRepository.findById(mappingId)
+        IdentityTypeAttributeMapping mapping = mappingRepository.findById(UUID.fromString(mappingId))
                 .orElseThrow(() -> new IllegalArgumentException("Mapping not found: " + mappingId));
         
         mapping.setSortOrder(sortOrder);
@@ -82,7 +88,7 @@ public class IdentityTypeAttributeMappingService {
     }
     
     public void deleteMapping(String mappingId) {
-        IdentityTypeAttributeMapping mapping = mappingRepository.findById(mappingId)
+        IdentityTypeAttributeMapping mapping = mappingRepository.findById(UUID.fromString(mappingId))
                 .orElseThrow(() -> new IllegalArgumentException("Mapping not found: " + mappingId));
         
         mapping.setActive(false);
@@ -92,7 +98,7 @@ public class IdentityTypeAttributeMappingService {
     }
     
     public void deleteMappingPermanently(String mappingId) {
-        mappingRepository.deleteById(mappingId);
+        mappingRepository.deleteById(UUID.fromString(mappingId));
         log.debug("Permanently deleted mapping {}", mappingId);
     }
     
@@ -100,7 +106,7 @@ public class IdentityTypeAttributeMappingService {
      * Validates a value against both base attribute rules and mapping-specific overrides
      */
     public boolean validateValueForMapping(String mappingId, String value) {
-        IdentityTypeAttributeMapping mapping = mappingRepository.findById(mappingId)
+        IdentityTypeAttributeMapping mapping = mappingRepository.findById(UUID.fromString(mappingId))
                 .orElseThrow(() -> new IllegalArgumentException("Mapping not found: " + mappingId));
         
         return mapping.validateValue(value);
@@ -110,7 +116,7 @@ public class IdentityTypeAttributeMappingService {
      * Gets the effective validation regex considering both base and override
      */
     public String getEffectiveValidationRegex(String mappingId) {
-        IdentityTypeAttributeMapping mapping = mappingRepository.findById(mappingId)
+        IdentityTypeAttributeMapping mapping = mappingRepository.findById(UUID.fromString(mappingId))
                 .orElseThrow(() -> new IllegalArgumentException("Mapping not found: " + mappingId));
         
         return mapping.getEffectiveValidationRegex();
@@ -120,7 +126,7 @@ public class IdentityTypeAttributeMappingService {
      * Gets the effective default value considering both base and override
      */
     public String getEffectiveDefaultValue(String mappingId) {
-        IdentityTypeAttributeMapping mapping = mappingRepository.findById(mappingId)
+        IdentityTypeAttributeMapping mapping = mappingRepository.findById(UUID.fromString(mappingId))
                 .orElseThrow(() -> new IllegalArgumentException("Mapping not found: " + mappingId));
         
         return mapping.getEffectiveDefaultValue();

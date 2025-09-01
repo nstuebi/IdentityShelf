@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface IdentityAttributeValueRepository extends JpaRepository<IdentityAttributeValue, String> {
+public interface IdentityAttributeValueRepository extends JpaRepository<IdentityAttributeValue, UUID> {
     
     List<IdentityAttributeValue> findByIdentityId(UUID identityId);
     

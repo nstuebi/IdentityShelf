@@ -25,6 +25,15 @@ public class AttributeTypeController {
         this.attributeTypeService = attributeTypeService;
     }
     
+    @GetMapping
+    public List<AttributeTypeResponse> getAllAttributeTypes() {
+        logger.info("Fetching all attribute types");
+        List<AttributeType> attributeTypes = attributeTypeService.getAllAttributeTypes();
+        return attributeTypes.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+    
     @GetMapping("/{id}")
     public ResponseEntity<AttributeTypeResponse> getAttributeType(@PathVariable String id) {
         logger.info("Fetching attribute type: {}", id);
@@ -76,32 +85,19 @@ public class AttributeTypeController {
         }
     }
     
-    @GetMapping("/by-identity-type/{identityTypeId}")
-    public ResponseEntity<List<AttributeTypeResponse>> getAttributesByIdentityType(@PathVariable String identityTypeId) {
-        logger.info("Fetching attributes for identity type: {}", identityTypeId);
-        try {
-            List<AttributeType> attributes = attributeTypeService.getAttributesByIdentityType(identityTypeId);
-            List<AttributeTypeResponse> responses = attributes.stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
-            return ResponseEntity.ok(responses);
-        } catch (Exception e) {
-            logger.error("Error fetching attributes for identity type: {}", identityTypeId, e);
-            return ResponseEntity.badRequest().build();
-        }
-    }
+
     
     private AttributeTypeResponse toResponse(AttributeType attributeType) {
         return new AttributeTypeResponse(
-            attributeType.getId(),
+            attributeType.getId().toString(),
             attributeType.getName(),
             attributeType.getDisplayName(),
             attributeType.getDescription(),
             attributeType.getDataType().toString(),
-            attributeType.isRequired(),
+            false, // required is now per mapping, not per attribute type
             attributeType.getDefaultValue(),
             attributeType.getValidationRegex(),
-            attributeType.getSortOrder(),
+            0, // sort order is now per mapping, not per attribute type
             attributeType.isActive(),
             attributeType.getCreatedAt(),
             attributeType.getUpdatedAt()

@@ -42,8 +42,8 @@ public class IdentityTypeAttributeMappingController {
     
     @GetMapping("/{mappingId}")
     public IdentityTypeAttributeMappingResponse getMapping(@PathVariable String mappingId) {
-        // We need to get by ID, let me add this method to the service
-        return null; // TODO: Implement
+        IdentityTypeAttributeMapping mapping = mappingService.getMappingById(mappingId);
+        return mapToResponse(mapping);
     }
     
     @PostMapping
@@ -89,27 +89,7 @@ public class IdentityTypeAttributeMappingController {
     }
     
     private IdentityTypeAttributeMappingResponse mapToResponse(IdentityTypeAttributeMapping mapping) {
-        return new IdentityTypeAttributeMappingResponse(
-                mapping.getId(),
-                mapping.getIdentityType().getId(),
-                mapping.getIdentityType().getName(),
-                mapping.getAttributeType().getId(),
-                mapping.getAttributeType().getName(),
-                mapping.getAttributeType().getDisplayName(),
-                mapping.getAttributeType().getDescription(),
-                mapping.getAttributeType().getDataType().name(),
-                mapping.getSortOrder(),
-                mapping.isRequired(),
-                mapping.getOverrideValidationRegex(),
-                mapping.getOverrideDefaultValue(),
-                mapping.isActive(),
-                mapping.getCreatedAt(),
-                mapping.getUpdatedAt(),
-                mapping.getEffectiveValidationRegex(),
-                mapping.getEffectiveDefaultValue(),
-                mapping.getAttributeType().getValidationRegex(),
-                mapping.getAttributeType().getDefaultValue()
-        );
+        return IdentityTypeAttributeMappingResponse.from(mapping);
     }
     
     @Data
