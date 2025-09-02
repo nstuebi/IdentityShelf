@@ -1,13 +1,14 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { createIdentity, getIdentity, updateIdentity, listIdentityTypes, getIdentityType, IdentityType, AttributeType } from '../api/client'
+import { createIdentity, getIdentity, updateIdentity, listIdentityTypes, getIdentityType, getMappingsForIdentityType, IdentityType, IdentityTypeAttributeMapping } from '../api/client'
 import { useNavigate, useParams } from 'react-router-dom'
+import { Form, Button, Alert, Card, Row, Col, Spinner } from 'react-bootstrap'
 
 export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   const navigate = useNavigate()
   const { id } = useParams()
   const [selectedIdentityType, setSelectedIdentityType] = useState<string>('')
   const [identityTypes, setIdentityTypes] = useState<IdentityType[]>([])
-  const [attributes, setAttributes] = useState<AttributeType[]>([])
+  const [attributeMappings, setAttributeMappings] = useState<IdentityTypeAttributeMapping[]>([])
   const [attributeValues, setAttributeValues] = useState<Record<string, any>>({})
   const [displayName, setDisplayName] = useState<string>('')
   const [status, setStatus] = useState<string>('ACTIVE')
@@ -28,11 +29,14 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     if (mode === 'edit' && id) {
       getIdentity(id).then(async (identity) => {
         try {
-          // Load the identity type to get its attributes
+          // Load the identity type to get its details
           const identityType = await getIdentityType(identity.identityType)
           setIdentityTypes([identityType])
           setSelectedIdentityType(identityType.id)
-          setAttributes(identityType.attributes)
+          
+          // Load attribute mappings for this identity type
+          const mappings = await getMappingsForIdentityType(identityType.id)
+          setAttributeMappings(mappings)
           
           // Populate the form with existing attribute values
           setAttributeValues(identity.attributes)
@@ -50,25 +54,27 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   // When identity type changes in create mode, load its attributes and initialize defaults
   useEffect(() => {
     if (mode === 'create' && selectedIdentityType) {
-      const selectedType = identityTypes.find((t: IdentityType) => t.id === selectedIdentityType)
-      if (selectedType) {
-        setAttributes(selectedType.attributes)
-        // Initialize attribute values with defaults
-        const initialValues: Record<string, any> = {}
-        selectedType.attributes.forEach((attr: AttributeType) => {
-          if (attr.defaultValue) {
-            initialValues[attr.name] = attr.defaultValue
-          } else {
-            initialValues[attr.name] = ''
-          }
+      getMappingsForIdentityType(selectedIdentityType)
+        .then((mappings) => {
+          setAttributeMappings(mappings)
+          // Initialize attribute values with defaults
+          const initialValues: Record<string, any> = {}
+          mappings.forEach((mapping) => {
+            const defaultValue = mapping.effectiveDefaultValue || mapping.overrideDefaultValue || mapping.baseDefaultValue
+            if (defaultValue) {
+              initialValues[mapping.attributeTypeName] = defaultValue
+            } else {
+              initialValues[mapping.attributeTypeName] = ''
+            }
+          })
+          setAttributeValues(initialValues)
         })
-        setAttributeValues(initialValues)
-      }
+        .catch((e) => setError(String(e)))
     } else if (mode === 'create' && !selectedIdentityType) {
-      setAttributes([])
+      setAttributeMappings([])
       setAttributeValues({})
     }
-  }, [selectedIdentityType, identityTypes, mode])
+  }, [selectedIdentityType, mode])
 
   const handleAttributeChange = (attributeName: string, value: any) => {
     setAttributeValues((prev: Record<string, any>) => ({
@@ -77,65 +83,66 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     }))
   }
 
-  const renderAttributeField = (attribute: AttributeType) => {
-    const value = attributeValues[attribute.name] || ''
+  const renderAttributeField = (mapping: IdentityTypeAttributeMapping) => {
+    const value = attributeValues[mapping.attributeTypeName] || ''
+    const validationRegex = mapping.effectiveValidationRegex || mapping.overrideValidationRegex || mapping.baseValidationRegex
     
-    switch (attribute.dataType) {
+    switch (mapping.attributeDataType) {
       case 'BOOLEAN':
         return (
-          <input
+          <Form.Check
             type="checkbox"
             checked={value === true || value === 'true'}
-            onChange={(e) => handleAttributeChange(attribute.name, e.target.checked)}
-            required={attribute.required}
+            onChange={(e) => handleAttributeChange(mapping.attributeTypeName, e.target.checked)}
+            required={mapping.required}
           />
         )
       case 'INTEGER':
       case 'DECIMAL':
         return (
-          <input
+          <Form.Control
             type="number"
             value={value}
-            onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
-            required={attribute.required}
-            step={attribute.dataType === 'DECIMAL' ? '0.01' : '1'}
+            onChange={(e) => handleAttributeChange(mapping.attributeTypeName, e.target.value)}
+            required={mapping.required}
+            step={mapping.attributeDataType === 'DECIMAL' ? '0.01' : '1'}
           />
         )
       case 'DATE':
         return (
-          <input
+          <Form.Control
             type="date"
             value={value}
-            onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
-            required={attribute.required}
+            onChange={(e) => handleAttributeChange(mapping.attributeTypeName, e.target.value)}
+            required={mapping.required}
           />
         )
       case 'DATETIME':
         return (
-          <input
+          <Form.Control
             type="datetime-local"
             value={value}
-            onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
-            required={attribute.required}
+            onChange={(e) => handleAttributeChange(mapping.attributeTypeName, e.target.value)}
+            required={mapping.required}
           />
         )
       case 'EMAIL':
         return (
-          <input
+          <Form.Control
             type="email"
             value={value}
-            onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
-            required={attribute.required}
+            onChange={(e) => handleAttributeChange(mapping.attributeTypeName, e.target.value)}
+            required={mapping.required}
           />
         )
       default: // STRING, PHONE, URL, SELECT, MULTI_SELECT
         return (
-          <input
+          <Form.Control
             type="text"
             value={value}
-            onChange={(e) => handleAttributeChange(attribute.name, e.target.value)}
-            required={attribute.required}
-            placeholder={attribute.validationRegex ? 'Format: ' + attribute.validationRegex : undefined}
+            onChange={(e) => handleAttributeChange(mapping.attributeTypeName, e.target.value)}
+            required={mapping.required}
+            placeholder={validationRegex ? 'Format: ' + validationRegex : undefined}
           />
         )
     }
@@ -154,15 +161,15 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     }
     
     // Validate required attributes
-    const missingRequiredAttributes = attributes
-      .filter(attr => attr.required)
-      .filter(attr => {
-        const value = attributeValues[attr.name]
+    const missingRequiredAttributes = attributeMappings
+      .filter(mapping => mapping.required)
+      .filter(mapping => {
+        const value = attributeValues[mapping.attributeTypeName]
         return value === undefined || value === null || value === ''
       })
     
     if (missingRequiredAttributes.length > 0) {
-      setError(`Please fill in all required attributes: ${missingRequiredAttributes.map(attr => attr.displayName).join(', ')}`)
+      setError(`Please fill in all required attributes: ${missingRequiredAttributes.map(mapping => mapping.attributeTypeDisplayName).join(', ')}`)
       setLoading(false)
       return
     }
@@ -222,198 +229,169 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   }
 
   if (mode === 'create' && identityTypes.length === 0) {
-    return <div>Loading identity types...</div>
-  }
-
-  if (mode === 'create' && identityTypes.length === 0 && !loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '2rem' }}>
-        <h2>No Identity Types Available</h2>
-        <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
-          You need to create at least one identity type before you can create identities.
-        </p>
-        <button 
-          onClick={() => navigate('/types/new')}
-          style={{ 
-            background: '#2563eb', 
-            color: 'white', 
-            border: 'none', 
-            padding: '10px 16px', 
-            borderRadius: 6,
-            cursor: 'pointer'
-          }}
-        >
-          Create Identity Type
-        </button>
+      <div className="text-center my-4">
+        <Spinner animation="border" className="me-2" />
+        Loading identity types...
       </div>
     )
   }
 
+  if (mode === 'create' && identityTypes.length === 0 && !loading) {
+    return (
+      <Card className="text-center p-4">
+        <Card.Body>
+          <Card.Title>No Identity Types Available</Card.Title>
+          <Card.Text className="text-muted mb-3">
+            You need to create at least one identity type before you can create identities.
+          </Card.Text>
+          <Button variant="primary" onClick={() => navigate('/types/new')}>
+            Create Identity Type
+          </Button>
+        </Card.Body>
+      </Card>
+    )
+  }
+
   return (
-    <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16, maxWidth: 500 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>{mode === 'create' ? 'New Identity' : 'Edit Identity'}</h2>
-      </div>
+    <>
+      <Row className="mb-3">
+        <Col>
+          <h2>{mode === 'create' ? 'New Identity' : 'Edit Identity'}</h2>
+        </Col>
+      </Row>
       
       {error && (
-        <div style={{ color: '#b91c1c', padding: '12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 6 }}>
-          <div style={{ fontWeight: 500, marginBottom: '8px' }}>Error: {error}</div>
+        <Alert variant="danger" className="mb-3">
+          <Alert.Heading>Error: {error}</Alert.Heading>
           {errorDetails && (
-            <details style={{ marginTop: '8px' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: 500, color: '#7f1d1d' }}>
+            <details className="mt-2">
+              <summary style={{ cursor: 'pointer' }}>
                 Show Error Details
               </summary>
-              <div style={{ marginTop: '8px' }}>
+              <div className="mt-2">
                 {errorDetails.apiResponse && (
-                  <div style={{ marginBottom: '12px' }}>
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#7f1d1d' }}>API Response:</h4>
-                    <pre style={{ 
-                      margin: '0 0 8px 0', 
-                      padding: '8px', 
-                      background: '#f3f4f6', 
-                      border: '1px solid #d1d5db', 
-                      borderRadius: '4px', 
-                      fontSize: '0.75em', 
-                      overflow: 'auto',
-                      whiteSpace: 'pre-wrap'
-                    }}>
+                  <div className="mb-3">
+                    <h6>API Response:</h6>
+                    <pre className="bg-light p-2 border rounded" style={{ fontSize: '0.75em', overflow: 'auto' }}>
                       {JSON.stringify(errorDetails.apiResponse, null, 2)}
                     </pre>
                   </div>
                 )}
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9em', color: '#7f1d1d' }}>Full Error Details:</h4>
-                <pre style={{ 
-                  margin: '0', 
-                  padding: '8px', 
-                  background: '#f3f4f6', 
-                  border: '1px solid #d1d5db', 
-                  borderRadius: '4px', 
-                  fontSize: '0.75em', 
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap'
-                }}>
+                <h6>Full Error Details:</h6>
+                <pre className="bg-light p-2 border rounded" style={{ fontSize: '0.75em', overflow: 'auto' }}>
                   {JSON.stringify(errorDetails, null, 2)}
                 </pre>
               </div>
             </details>
           )}
-        </div>
+        </Alert>
       )}
       
-      {mode === 'create' && (
-        <label style={{ display: 'grid', gap: 4 }}>
-          <span style={{ fontWeight: 500 }}>Identity Type *</span>
-          <select 
-            value={selectedIdentityType} 
-            onChange={(e) => setSelectedIdentityType(e.target.value)}
-            required
-            style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
-          >
-            <option value="">Select an identity type</option>
-            {identityTypes.map(type => (
-              <option key={type.id} value={type.id}>
-                {type.displayName}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-
-      {selectedIdentityType && (
-        <div style={{ display: 'grid', gap: 16 }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Basic Information</h3>
-          
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span style={{ fontWeight: 500 }}>Display Name *</span>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+      <Form onSubmit={onSubmit} style={{ maxWidth: '600px' }}>
+        {mode === 'create' && (
+          <Form.Group className="mb-3">
+            <Form.Label>Identity Type *</Form.Label>
+            <Form.Select
+              value={selectedIdentityType} 
+              onChange={(e) => setSelectedIdentityType(e.target.value)}
               required
-              placeholder="Enter display name"
-              style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
-            />
-          </label>
-
-          <label style={{ display: 'grid', gap: 4 }}>
-            <span style={{ fontWeight: 500 }}>Status *</span>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              required
-              style={{ padding: '8px 12px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: '14px' }}
             >
-              <option value="ACTIVE">Active</option>
-              <option value="SUSPENDED">Suspended</option>
-              <option value="ARCHIVED">Archived</option>
-              <option value="ESTABLISHED">Established</option>
-            </select>
-          </label>
-        </div>
-      )}
-
-      {selectedIdentityType && attributes.length > 0 && (
-        <div style={{ display: 'grid', gap: 16 }}>
-          <h3 style={{ margin: '0 0 16px 0', fontSize: '1.1em', color: '#374151' }}>Identity Attributes</h3>
-          <div style={{ display: 'grid', gap: 16 }}>
-            {attributes
-              .sort((a, b) => a.sortOrder - b.sortOrder)
-              .map(attribute => (
-                <label key={attribute.id} style={{ display: 'grid', gap: 4 }}>
-                  <span style={{ fontWeight: 500 }}>
-                    {attribute.displayName}
-                    {attribute.required && <span style={{ color: '#dc2626' }}> *</span>}
-                  </span>
-                  {attribute.description && (
-                    <div style={{ fontSize: '0.875em', color: '#6b7280', marginBottom: '4px' }}>
-                      {attribute.description}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {renderAttributeField(attribute)}
-                  </div>
-                </label>
+              <option value="">Select an identity type</option>
+              {identityTypes.map(type => (
+                <option key={type.id} value={type.id}>
+                  {type.displayName}
+                </option>
               ))}
-          </div>
-        </div>
-      )}
+            </Form.Select>
+          </Form.Group>
+        )}
 
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <button 
-          type="submit" 
-          disabled={loading || (mode === 'create' && !selectedIdentityType)}
-          style={{ 
-            background: '#2563eb', 
-            color: 'white', 
-            border: 'none', 
-            padding: '10px 16px', 
-            borderRadius: 6,
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: (loading || (mode === 'create' && !selectedIdentityType)) ? 'not-allowed' : 'pointer',
-            opacity: (loading || (mode === 'create' && !selectedIdentityType)) ? 0.6 : 1
-          }}
-        >
-          {loading ? 'Saving...' : (mode === 'create' ? 'Create' : 'Save')}
-        </button>
-        <button 
-          type="button" 
-          onClick={() => navigate('/')} 
-          style={{ 
-            background: '#6b7280', 
-            color: 'white', 
-            border: 'none', 
-            padding: '10px 16px', 
-            borderRadius: 6,
-            fontSize: '14px',
-            fontWeight: 500,
-            cursor: 'pointer'
-          }}
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
+        {selectedIdentityType && (
+          <Card className="mb-4">
+            <Card.Header>
+              <Card.Title className="mb-0">Basic Information</Card.Title>
+            </Card.Header>
+            <Card.Body>
+              <Form.Group className="mb-3">
+                <Form.Label>Display Name *</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                  placeholder="Enter display name"
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Status *</Form.Label>
+                <Form.Select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  required
+                >
+                  <option value="ACTIVE">Active</option>
+                  <option value="SUSPENDED">Suspended</option>
+                  <option value="ARCHIVED">Archived</option>
+                  <option value="ESTABLISHED">Established</option>
+                </Form.Select>
+              </Form.Group>
+            </Card.Body>
+          </Card>
+        )}
+
+        {selectedIdentityType && attributeMappings.length > 0 && (
+          <Card className="mb-4">
+            <Card.Header>
+              <Card.Title className="mb-0">Identity Attributes</Card.Title>
+            </Card.Header>
+            <Card.Body>
+              {attributeMappings
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map(mapping => (
+                  <Form.Group key={mapping.id} className="mb-3">
+                    <Form.Label>
+                      {mapping.attributeTypeDisplayName}
+                      {mapping.required && <span className="text-danger"> *</span>}
+                    </Form.Label>
+                    {mapping.attributeTypeDescription && (
+                      <Form.Text className="text-muted d-block mb-2">
+                        {mapping.attributeTypeDescription}
+                      </Form.Text>
+                    )}
+                    {renderAttributeField(mapping)}
+                  </Form.Group>
+                ))}
+            </Card.Body>
+          </Card>
+        )}
+
+        <div className="d-flex gap-2">
+          <Button 
+            type="submit" 
+            variant="primary"
+            disabled={loading || (mode === 'create' && !selectedIdentityType)}
+          >
+            {loading ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Saving...
+              </>
+            ) : (
+              mode === 'create' ? 'Create' : 'Save'
+            )}
+          </Button>
+          <Button 
+            type="button" 
+            variant="secondary"
+            onClick={() => navigate('/')}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Form>
+    </>
   )
 }
 
