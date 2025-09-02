@@ -53,8 +53,7 @@ public class IdentityService {
     }
 
     public IdentityResponse createIdentity(CreateIdentityRequest request) {
-        logger.debug("Creating identity with username: {}, email: {}, type: {}", 
-            request.getUsername(), request.getEmail(), request.getIdentityType());
+        logger.debug("Creating identity with type: {}", request.getIdentityType());
         
         try {
             // Get the identity type
@@ -74,25 +73,11 @@ public class IdentityService {
 
             // Extract core attributes from the attributes map
             Map<String, Object> attributes = request.getAttributes() != null ? request.getAttributes() : new HashMap<>();
-            String username = (String) attributes.get("username");
-            String email = (String) attributes.get("email");
             String displayName = (String) attributes.get("display_name");
             String statusStr = (String) attributes.get("status");
-            
-            // Check for duplicates
-            if (username != null && identityRepository.existsByUsername(username)) {
-                logger.warn("Username already exists: {}", username);
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
-            }
-            if (email != null && identityRepository.existsByEmail(email)) {
-                logger.warn("Email already exists: {}", email);
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
-            }
 
             Identity identity = new Identity();
-            identity.setUsername(username);
-            identity.setEmail(email);
-            identity.setDisplayName(displayName != null ? displayName : username);
+            identity.setDisplayName(displayName != null ? displayName : "New Identity");
             if (statusStr != null) {
                 try {
                     identity.setStatus(IdentityStatus.valueOf(statusStr.toUpperCase()));
@@ -140,20 +125,6 @@ public class IdentityService {
     public IdentityResponse updateIdentity(UUID id, UpdateIdentityRequest request) {
         Identity identity = identityRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Identity not found"));
-
-        if (request.getUsername() != null && !request.getUsername().equals(identity.getUsername())) {
-            if (identityRepository.existsByUsernameAndUuidNot(request.getUsername(), id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
-            }
-            identity.setUsername(request.getUsername());
-        }
-
-        if (request.getEmail() != null && !request.getEmail().equals(identity.getEmail())) {
-            if (identityRepository.existsByEmailAndUuidNot(request.getEmail(), id)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
-            }
-            identity.setEmail(request.getEmail());
-        }
 
         if (request.getDisplayName() != null) {
             identity.setDisplayName(request.getDisplayName());
@@ -203,8 +174,6 @@ public class IdentityService {
             
         return new IdentityResponse(
             identity.getUuid(),
-            identity.getUsername(),
-            identity.getEmail(),
             identity.getDisplayName(),
             identity.getStatus().toString(),
             identity.getCreatedAt(),

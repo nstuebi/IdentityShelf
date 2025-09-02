@@ -20,11 +20,7 @@ public class Identity {
     @Column(name = "uuid", nullable = false, columnDefinition = "uuid")
     private UUID uuid;
 
-    @Column(name = "username", nullable = false, unique = true, length = 100)
-    private String username;
 
-    @Column(name = "email", nullable = false, unique = true, length = 320)
-    private String email;
 
     @Column(name = "display_name", nullable = false, length = 255)
     private String displayName;
@@ -45,6 +41,9 @@ public class Identity {
 
     @OneToMany(mappedBy = "identity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IdentityAttributeValue> values = new ArrayList<>();
+
+    @OneToMany(mappedBy = "identity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IdentityIdentifier> identifiers = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

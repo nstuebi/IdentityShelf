@@ -23,13 +23,6 @@ public class CreateIdentityRequest {
     public Map<String, Object> getAttributes() { return attributes; }
     
     // Helper methods to extract common attributes
-    public String getUsername() { 
-        return attributes != null ? (String) attributes.get("username") : null; 
-    }
-    
-    public String getEmail() { 
-        return attributes != null ? (String) attributes.get("email") : null; 
-    }
     
     public String getDisplayName() { 
         return attributes != null ? (String) attributes.get("display_name") : null; 

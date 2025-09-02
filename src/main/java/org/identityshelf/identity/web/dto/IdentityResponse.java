@@ -10,8 +10,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class IdentityResponse {
     private final UUID id;
-    private final String username;
-    private final String email;
     private final String displayName;
     private final String status;
     private final OffsetDateTime createdAt;

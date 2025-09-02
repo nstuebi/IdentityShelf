@@ -56,6 +56,60 @@ export interface IdentityTypeAttributeMapping {
   baseDefaultValue?: string
 }
 
+export interface IdentifierType {
+  id: string
+  name: string
+  displayName: string
+  description?: string
+  dataType: string
+  validationRegex?: string
+  defaultValue?: string
+  unique: boolean
+  searchable: boolean
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IdentityIdentifier {
+  id: string
+  identityId: string
+  identifierTypeId: string
+  identifierTypeName: string
+  identifierTypeDisplayName: string
+  identifierValue: string
+  primary: boolean
+  verified: boolean
+  verifiedAt?: string
+  verifiedBy?: string
+  active: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface IdentityTypeIdentifierMapping {
+  id: string
+  identityTypeId: string
+  identityTypeName: string
+  identifierTypeId: string
+  identifierTypeName: string
+  identifierTypeDisplayName: string
+  identifierTypeDescription?: string
+  identifierDataType: string
+  sortOrder: number
+  required: boolean
+  primaryCandidate: boolean
+  overrideValidationRegex?: string
+  overrideDefaultValue?: string
+  active: boolean
+  createdAt: string
+  updatedAt: string
+  effectiveValidationRegex?: string
+  effectiveDefaultValue?: string
+  baseValidationRegex?: string
+  baseDefaultValue?: string
+}
+
 export interface Page<T> {
   content: T[]
   number: number
@@ -266,6 +320,66 @@ export async function deleteMapping(id: string): Promise<void> {
   }
 }
 
+// Identity Type Identifier Mapping API functions
+export async function getIdentityTypeIdentifierMappings(identityTypeId: string): Promise<IdentityTypeIdentifierMapping[]> {
+  const res = await fetch(`/api/identity-type-identifier-mappings/by-identity-type/${identityTypeId}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get identifier mappings: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function createIdentityTypeIdentifierMapping(payload: {
+  identityTypeId: string
+  identifierTypeId: string
+  sortOrder: number
+  required: boolean
+  primaryCandidate: boolean
+  overrideValidationRegex?: string
+  overrideDefaultValue?: string
+}): Promise<IdentityTypeIdentifierMapping> {
+  const res = await fetch('/api/identity-type-identifier-mappings', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to create identifier mapping: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function updateIdentityTypeIdentifierMapping(id: string, payload: {
+  identityTypeId: string
+  identifierTypeId: string
+  sortOrder: number
+  required: boolean
+  primaryCandidate: boolean
+  overrideValidationRegex?: string
+  overrideDefaultValue?: string
+}): Promise<IdentityTypeIdentifierMapping> {
+  const res = await fetch(`/api/identity-type-identifier-mappings/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(payload)
+  })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to update identifier mapping: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function deleteIdentityTypeIdentifierMapping(id: string): Promise<void> {
+  const res = await fetch(`/api/identity-type-identifier-mappings/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to delete identifier mapping: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+}
+
 // Build Info API functions
 export interface BuildInfo {
   applicationName: string
@@ -279,6 +393,219 @@ export async function getBuildInfo(): Promise<BuildInfo> {
   if (!res.ok) {
     const errorText = await res.text()
     throw new Error(`Failed to get build info: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+// Identifier Type API functions
+export async function listIdentifierTypes(): Promise<IdentifierType[]> {
+  const res = await fetch('/api/identifier-types')
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to list identifier types: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getSearchableIdentifierTypes(): Promise<IdentifierType[]> {
+  const res = await fetch('/api/identifier-types/searchable')
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to list searchable identifier types: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getIdentifierType(id: string): Promise<IdentifierType> {
+  const res = await fetch(`/api/identifier-types/${id}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Identifier type not found: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getIdentifierTypeByName(name: string): Promise<IdentifierType> {
+  const res = await fetch(`/api/identifier-types/by-name/${name}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Identifier type not found: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function createIdentifierType(payload: {
+  name: string
+  displayName: string
+  description?: string
+  dataType: string
+  validationRegex?: string
+  defaultValue?: string
+  unique?: boolean
+  searchable?: boolean
+}): Promise<IdentifierType> {
+  const res = await fetch('/api/identifier-types', { method: 'POST', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to create identifier type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function updateIdentifierType(id: string, payload: {
+  name: string
+  displayName: string
+  description?: string
+  dataType: string
+  validationRegex?: string
+  defaultValue?: string
+  unique?: boolean
+  searchable?: boolean
+}): Promise<IdentifierType> {
+  const res = await fetch(`/api/identifier-types/${id}`, { method: 'PUT', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to update identifier type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function deleteIdentifierType(id: string): Promise<void> {
+  const res = await fetch(`/api/identifier-types/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to delete identifier type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+}
+
+export async function activateIdentifierType(id: string): Promise<void> {
+  const res = await fetch(`/api/identifier-types/${id}/activate`, { method: 'POST' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to activate identifier type: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+}
+
+// Identity Identifier API functions
+export async function searchIdentifiersByValue(value: string): Promise<IdentityIdentifier[]> {
+  const res = await fetch(`/api/identifiers/search?value=${encodeURIComponent(value)}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to search identifiers: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function searchIdentifiers(payload: {
+  identifierTypeId?: string
+  identifierValue?: string
+  verified?: boolean
+  primary?: boolean
+}): Promise<IdentityIdentifier[]> {
+  const res = await fetch('/api/identifiers/search', { method: 'POST', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to search identifiers: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getIdentifierSuggestions(partial: string): Promise<IdentityIdentifier[]> {
+  const res = await fetch(`/api/identifiers/search/suggestions?partial=${encodeURIComponent(partial)}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get identifier suggestions: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function findIdentifierByTypeAndValue(typeName: string, value: string): Promise<IdentityIdentifier | null> {
+  const res = await fetch(`/api/identifiers/search/by-type-and-value?typeName=${encodeURIComponent(typeName)}&value=${encodeURIComponent(value)}`)
+  if (res.status === 404) {
+    return null
+  }
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to find identifier: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getIdentifiersForIdentity(identityId: string): Promise<IdentityIdentifier[]> {
+  const res = await fetch(`/api/identifiers/identity/${identityId}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get identifiers for identity: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getPrimaryIdentifierForIdentity(identityId: string): Promise<IdentityIdentifier | null> {
+  const res = await fetch(`/api/identifiers/identity/${identityId}/primary`)
+  if (res.status === 404) {
+    return null
+  }
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get primary identifier: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getVerifiedIdentifiersForIdentity(identityId: string): Promise<IdentityIdentifier[]> {
+  const res = await fetch(`/api/identifiers/identity/${identityId}/verified`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get verified identifiers: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function createIdentifier(payload: {
+  identityId: string
+  identifierTypeId: string
+  identifierValue: string
+  primary?: boolean
+}): Promise<IdentityIdentifier> {
+  const res = await fetch('/api/identifiers', { method: 'POST', headers, body: JSON.stringify(payload) })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to create identifier: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function updateIdentifier(id: string, identifierValue: string, primary = false): Promise<IdentityIdentifier> {
+  const res = await fetch(`/api/identifiers/${id}?identifierValue=${encodeURIComponent(identifierValue)}&primary=${primary}`, { method: 'PUT' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to update identifier: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function deleteIdentifier(id: string): Promise<void> {
+  const res = await fetch(`/api/identifiers/${id}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to delete identifier: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+}
+
+export async function verifyIdentifier(id: string, verifiedBy: string): Promise<IdentityIdentifier> {
+  const res = await fetch(`/api/identifiers/${id}/verify?verifiedBy=${encodeURIComponent(verifiedBy)}`, { method: 'POST' })
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to verify identifier: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
+  }
+  return res.json()
+}
+
+export async function getIdentifierCountByType(typeId: string): Promise<number> {
+  const res = await fetch(`/api/identifiers/statistics/count-by-type/${typeId}`)
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`Failed to get identifier count: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ''}`)
   }
   return res.json()
 }

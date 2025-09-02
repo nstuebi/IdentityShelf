@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { IdentityType, IdentityTypeAttributeMapping, getIdentityType } from '../api/client'
+import { IdentityType, IdentityTypeAttributeMapping, IdentityTypeIdentifierMapping, getIdentityType } from '../api/client'
 import AttributeMappingManager from '../components/AttributeMappingManager'
+import IdentifierMappingManager from '../components/IdentifierMappingManager'
 
 export default function IdentityTypeView() {
   const { name } = useParams<{ name: string }>()
   const [type, setType] = useState<IdentityType | null>(null)
   const [mappings, setMappings] = useState<IdentityTypeAttributeMapping[]>([])
+  const [identifierMappings, setIdentifierMappings] = useState<IdentityTypeIdentifierMapping[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,6 +33,10 @@ export default function IdentityTypeView() {
 
   const handleMappingsChange = (newMappings: IdentityTypeAttributeMapping[]) => {
     setMappings(newMappings)
+  }
+
+  const handleIdentifierMappingsChange = (newMappings: IdentityTypeIdentifierMapping[]) => {
+    setIdentifierMappings(newMappings)
   }
 
   if (loading) return <div>Loading identity type...</div>
@@ -159,12 +165,26 @@ export default function IdentityTypeView() {
         border: '1px solid #e5e7eb', 
         borderRadius: 8, 
         padding: '1.5rem',
-        background: 'white'
+        background: 'white',
+        marginBottom: '1.5rem'
       }}>
         <AttributeMappingManager
           identityTypeId={type.id}
           identityTypeName={type.displayName}
           onMappingsChange={handleMappingsChange}
+        />
+      </div>
+
+      <div style={{ 
+        border: '1px solid #e5e7eb', 
+        borderRadius: 8, 
+        padding: '1.5rem',
+        background: 'white'
+      }}>
+        <IdentifierMappingManager
+          identityTypeId={type.id}
+          identityTypeName={type.displayName}
+          onMappingsChange={handleIdentifierMappingsChange}
         />
       </div>
     </div>

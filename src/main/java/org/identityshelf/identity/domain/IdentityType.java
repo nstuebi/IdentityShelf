@@ -42,6 +42,9 @@ public class IdentityType {
     @OneToMany(mappedBy = "identityType", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IdentityTypeAttributeMapping> attributeMappings = new ArrayList<>();
     
+    @OneToMany(mappedBy = "identityType", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IdentityTypeIdentifierMapping> identifierMappings = new ArrayList<>();
+    
     // JPA lifecycle methods
     @PrePersist
     protected void onCreate() {
@@ -68,6 +71,23 @@ public class IdentityType {
     public IdentityTypeAttributeMapping addAttribute(AttributeType attribute, int sortOrder, boolean required) {
         IdentityTypeAttributeMapping mapping = new IdentityTypeAttributeMapping(this, attribute, sortOrder, required);
         addAttributeMapping(mapping);
+        return mapping;
+    }
+    
+    // Helper methods for identifier mappings
+    public void addIdentifierMapping(IdentityTypeIdentifierMapping mapping) {
+        identifierMappings.add(mapping);
+        mapping.setIdentityType(this);
+    }
+
+    public void removeIdentifierMapping(IdentityTypeIdentifierMapping mapping) {
+        identifierMappings.remove(mapping);
+        mapping.setIdentityType(null);
+    }
+    
+    public IdentityTypeIdentifierMapping addIdentifier(IdentifierType identifier, int sortOrder, boolean required, boolean primaryCandidate) {
+        IdentityTypeIdentifierMapping mapping = new IdentityTypeIdentifierMapping(this, identifier, sortOrder, required, primaryCandidate);
+        addIdentifierMapping(mapping);
         return mapping;
     }
 }
