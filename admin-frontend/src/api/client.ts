@@ -1,7 +1,5 @@
 export interface Identity {
   id: string
-  username: string
-  email: string
   displayName: string
   status: string
   identityType: string

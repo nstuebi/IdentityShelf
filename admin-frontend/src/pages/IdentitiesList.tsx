@@ -40,9 +40,8 @@ export default function IdentitiesList() {
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
         <thead>
           <tr>
-            <th style={th}>Username</th>
-            <th style={th}>Email</th>
             <th style={th}>Display Name</th>
+            <th style={th}>Identity Type</th>
             <th style={th}>Status</th>
             <th style={th}>Created</th>
             <th style={th}>Actions</th>
@@ -51,9 +50,8 @@ export default function IdentitiesList() {
         <tbody>
           {page.content.map((i) => (
             <tr key={i.id}>
-              <td style={td}>{i.username}</td>
-              <td style={td}>{i.email}</td>
               <td style={td}>{i.displayName}</td>
+              <td style={td}>{i.identityType}</td>
               <td style={td}>
                 <span style={{
                   padding: '2px 8px',
@@ -74,7 +72,7 @@ export default function IdentitiesList() {
             </tr>
           ))}
           {page.content.length === 0 && (
-            <tr><td style={td} colSpan={6}>No identities found.</td></tr>
+            <tr><td style={td} colSpan={5}>No identities found.</td></tr>
           )}
         </tbody>
       </table>
