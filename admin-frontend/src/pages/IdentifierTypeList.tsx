@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Table, Button, Badge, Spinner, Alert, Row, Col, Card } from 'react-bootstrap'
 import { IdentifierType, listIdentifierTypes, deleteIdentifierType } from '../api/client'
 
 export default function IdentifierTypeList() {
@@ -34,112 +35,98 @@ export default function IdentifierTypeList() {
     }
   }
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>
+  if (loading) return <div className="text-center my-4"><Spinner animation="border" /></div>
+  if (error) return <Alert variant="danger">Error: {error}</Alert>
 
   return (
-    <div className="container">
-      <div className="flex justify-between items-center mb-4">
-        <h1>🔧 Identifier Types (UPDATED)</h1>
-        <Link to="/identifier-types/new" className="btn btn-success">
-          Create Identifier Type
-        </Link>
-      </div>
+    <>
+      <Row className="mb-3">
+        <Col>
+          <h1>Identifier Types</h1>
+        </Col>
+        <Col xs="auto">
+          <Button as={Link} to="/identifier-types/new" variant="success">
+            Create Identifier Type
+          </Button>
+        </Col>
+      </Row>
 
-      <div className="info-card">
-        <h3>About Identifier Types</h3>
-        <p>
-          Identifier types define searchable identity markers like SSN, passport numbers, or driver licenses. 
-          These are highly indexed for fast lookups and can enforce uniqueness and validation patterns.
-        </p>
-      </div>
+      <Card className="mb-4">
+        <Card.Body>
+          <Card.Title>About Identifier Types</Card.Title>
+          <Card.Text>
+            Identifier types define searchable identity markers like SSN, passport numbers, or driver licenses. 
+            These are highly indexed for fast lookups and can enforce uniqueness and validation patterns.
+          </Card.Text>
+        </Card.Body>
+      </Card>
 
       {identifierTypes.length === 0 ? (
-        <div className="empty-state">
-          <h3>No identifier types found</h3>
-          <p>Create your first identifier type to get started.</p>
-        </div>
+        <Card className="text-center p-4">
+          <Card.Body>
+            <h5>No identifier types found</h5>
+            <p className="text-muted">Create your first identifier type to get started.</p>
+          </Card.Body>
+        </Card>
       ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Display Name</th>
-                <th>Data Type</th>
-                <th>Default Value</th>
-                <th>Validation</th>
-                <th>Status</th>
-                <th>Actions</th>
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Display Name</th>
+              <th>Data Type</th>
+              <th>Default Value</th>
+              <th>Validation</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {identifierTypes.map((identifierType) => (
+              <tr key={identifierType.id}>
+                <td>
+                  <strong>{identifierType.name}</strong>
+                </td>
+                <td>
+                  {identifierType.displayName}
+                </td>
+                <td>
+                  <Badge bg="light" text="dark" className="text-uppercase">
+                    {identifierType.dataType}
+                  </Badge>
+                </td>
+                <td>
+                  {identifierType.defaultValue || 
+                    <span className="text-muted fst-italic">None</span>
+                  }
+                </td>
+                <td>
+                  {identifierType.validationRegex ? (
+                    <code className="text-break" style={{ fontSize: '0.8em', maxWidth: '200px', display: 'inline-block' }}>
+                      {identifierType.validationRegex}
+                    </code>
+                  ) : (
+                    <span className="text-muted fst-italic">None</span>
+                  )}
+                </td>
+                <td>
+                  <Badge bg={identifierType.active ? 'success' : 'secondary'}>
+                    {identifierType.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </td>
+                <td>
+                  <Button as={Link} to={`/identifier-types/${identifierType.id}/edit`} variant="outline-primary" size="sm" className="me-2">
+                    Edit
+                  </Button>
+                  <Button variant="outline-danger" size="sm" onClick={() => handleDelete(identifierType.id, identifierType.name)}>
+                    Delete
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {identifierTypes.map((identifierType) => (
-                <tr key={identifierType.id}>
-                  <td className="font-medium">
-                    {identifierType.name}
-                  </td>
-                  <td>
-                    {identifierType.displayName}
-                  </td>
-                  <td>
-                    <span className="badge badge-gray text-xs" style={{ textTransform: 'uppercase' }}>
-                      {identifierType.dataType}
-                    </span>
-                  </td>
-                  <td>
-                    {identifierType.defaultValue || 
-                      <span className="text-gray-500" style={{ fontStyle: 'italic' }}>None</span>
-                    }
-                  </td>
-                  <td>
-                    {identifierType.validationRegex ? (
-                      <code className="code" style={{ 
-                        maxWidth: '200px',
-                        display: 'inline-block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {identifierType.validationRegex}
-                      </code>
-                    ) : (
-                      <span className="text-gray-500" style={{ fontStyle: 'italic' }}>None</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className={identifierType.active ? 'status-active' : 'status-inactive'}>
-                      {identifierType.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex gap-2">
-                      <Link
-                        to={`/identifier-types/${identifierType.id}/edit`}
-                        className="text-blue-600 text-sm"
-                        style={{ textDecoration: 'none' }}
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(identifierType.id, identifierType.name)}
-                        className="text-red-600 text-sm"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
       )}
-    </div>
+    </>
   )
 }

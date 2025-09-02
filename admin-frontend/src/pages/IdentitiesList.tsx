@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { deleteIdentity, listIdentities, type Identity, type Page } from '../api/client'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Table, Button, Badge, Spinner, Alert, Row, Col } from 'react-bootstrap'
 
 export default function IdentitiesList() {
   const navigate = useNavigate()
@@ -28,78 +29,89 @@ export default function IdentitiesList() {
     listIdentities(pageNum, size).then(setPage)
   }
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div style={{ color: '#b91c1c' }}>{error}</div>
+  if (loading) return <div className="text-center my-4"><Spinner animation="border" /></div>
+  if (error) return <Alert variant="danger">{error}</Alert>
   if (!page) return null
 
   return (
-    <div>
-      <div style={{ marginBottom: 12 }}>
-        <button onClick={() => navigate('/new')} style={{ background: '#2563eb', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 6 }}>New Identity</button>
-      </div>
-      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+    <>
+      <Row className="mb-3">
+        <Col>
+          <h2>Identities</h2>
+        </Col>
+        <Col xs="auto">
+          <Button variant="primary" onClick={() => navigate('/new')}>New Identity</Button>
+        </Col>
+      </Row>
+      
+      <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th style={th}>Display Name</th>
-            <th style={th}>Identity Type</th>
-            <th style={th}>Status</th>
-            <th style={th}>Created</th>
-            <th style={th}>Actions</th>
+            <th>Display Name</th>
+            <th>Identity Type</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {page.content.map((i) => (
             <tr key={i.id}>
-              <td style={td}>{i.displayName}</td>
-              <td style={td}>{i.identityType}</td>
-              <td style={td}>
-                <span style={{
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '0.75rem',
-                  background: getStatusColor(i.status),
-                  color: 'white',
-                  fontWeight: '500'
-                }}>
+              <td>{i.displayName}</td>
+              <td>{i.identityType}</td>
+              <td>
+                <Badge bg={getStatusVariant(i.status)}>
                   {i.status}
-                </span>
+                </Badge>
               </td>
-              <td style={td}>{new Date(i.createdAt).toLocaleString()}</td>
-              <td style={td}>
-                <Link to={`/${i.id}/edit`} style={{ marginRight: 8 }}>Edit</Link>
-                <button onClick={() => onDelete(i.id)} style={{ background: '#b91c1c', color: 'white', border: 'none', padding: '4px 8px', borderRadius: 6 }}>Delete</button>
+              <td>{new Date(i.createdAt).toLocaleString()}</td>
+              <td>
+                <Button as={Link} to={`/${i.id}/edit`} variant="outline-primary" size="sm" className="me-2">
+                  Edit
+                </Button>
+                <Button variant="outline-danger" size="sm" onClick={() => onDelete(i.id)}>
+                  Delete
+                </Button>
               </td>
             </tr>
           ))}
           {page.content.length === 0 && (
-            <tr><td style={td} colSpan={5}>No identities found.</td></tr>
+            <tr><td colSpan={5} className="text-center text-muted">No identities found.</td></tr>
           )}
         </tbody>
-      </table>
-      <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <button disabled={page.number <= 0} onClick={() => gotoPage(page.number - 1)}>Prev</button>
-        <span>Page {page.number + 1} of {page.totalPages}</span>
-        <button disabled={page.number + 1 >= page.totalPages} onClick={() => gotoPage(page.number + 1)}>Next</button>
-      </div>
-    </div>
+      </Table>
+      
+      <Row className="align-items-center">
+        <Col>
+          <Button variant="outline-secondary" disabled={page.number <= 0} onClick={() => gotoPage(page.number - 1)}>
+            Previous
+          </Button>
+        </Col>
+        <Col xs="auto">
+          <span>Page {page.number + 1} of {page.totalPages}</span>
+        </Col>
+        <Col className="text-end">
+          <Button variant="outline-secondary" disabled={page.number + 1 >= page.totalPages} onClick={() => gotoPage(page.number + 1)}>
+            Next
+          </Button>
+        </Col>
+      </Row>
+    </>
   )
 }
 
-const th: React.CSSProperties = { textAlign: 'left', borderBottom: '1px solid #ddd', padding: 8, background: '#f3f4f6' }
-const td: React.CSSProperties = { borderBottom: '1px solid #eee', padding: 8 }
-
-function getStatusColor(status: string): string {
+function getStatusVariant(status: string): string {
   switch (status) {
     case 'ACTIVE':
-      return '#059669'
+      return 'success'
     case 'SUSPENDED':
-      return '#dc2626'
+      return 'danger'
     case 'ARCHIVED':
-      return '#6b7280'
+      return 'secondary'
     case 'ESTABLISHED':
-      return '#2563eb'
+      return 'primary'
     default:
-      return '#6b7280'
+      return 'secondary'
   }
 }
 

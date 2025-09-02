@@ -181,10 +181,18 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
           attributes: allAttributes
         })
       } else if (id) {
-        // For edit mode, we'll need to implement this properly
-        // For now, just navigate back
-        navigate('/')
-        return
+        // For edit mode, send all the current attribute values plus the direct fields
+        const allAttributes = {
+          ...attributeValues,
+          display_name: displayName,
+          status: status
+        }
+        
+        await updateIdentity(id, {
+          displayName: displayName,
+          status: status,
+          attributes: allAttributes
+        })
       }
       navigate('/')
     } catch (e) {

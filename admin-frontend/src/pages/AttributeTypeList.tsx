@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Table, Button, Badge, Spinner, Alert, Row, Col, Card } from 'react-bootstrap'
 import { listAttributeTypes, deleteAttributeType, AttributeType } from '../api/client'
 
 export default function AttributeTypeList() {
@@ -35,148 +36,98 @@ export default function AttributeTypeList() {
     }
   }
 
-  if (loading) return <div>Loading...</div>
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>
+  if (loading) return <div className="text-center my-4"><Spinner animation="border" /></div>
+  if (error) return <Alert variant="danger">Error: {error}</Alert>
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1>Attribute Types</h1>
-        <Link 
-          to="/attribute-types/create"
-          style={{
-            background: '#059669',
-            color: 'white',
-            padding: '8px 16px',
-            borderRadius: 6,
-            textDecoration: 'none'
-          }}
-        >
-          Create Attribute Type
-        </Link>
-      </div>
+    <>
+      <Row className="mb-3">
+        <Col>
+          <h1>Attribute Types</h1>
+        </Col>
+        <Col xs="auto">
+          <Button as={Link} to="/attribute-types/create" variant="success">
+            Create Attribute Type
+          </Button>
+        </Col>
+      </Row>
 
-      <div style={{ marginBottom: '1rem', padding: '1rem', background: '#f0f9ff', borderRadius: 8 }}>
-        <h3 style={{ margin: '0 0 0.5rem 0' }}>About Attribute Types</h3>
-        <p style={{ margin: 0, fontSize: '0.875rem', color: '#374151' }}>
-          Attribute types define reusable field definitions that can be assigned to multiple identity types. 
-          Each attribute type defines the base validation rules and defaults, which can be overridden per identity type.
-        </p>
-      </div>
+      <Card className="mb-4">
+        <Card.Body>
+          <Card.Title>About Attribute Types</Card.Title>
+          <Card.Text>
+            Attribute types define reusable field definitions that can be assigned to multiple identity types. 
+            Each attribute type defines the base validation rules and defaults, which can be overridden per identity type.
+          </Card.Text>
+        </Card.Body>
+      </Card>
 
       {attributeTypes.length === 0 ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '3rem',
-          border: '2px dashed #e5e7eb',
-          borderRadius: 8,
-          color: '#6b7280'
-        }}>
-          <h3>No attribute types found</h3>
-          <p>Create your first attribute type to get started.</p>
-        </div>
+        <Card className="text-center p-4">
+          <Card.Body>
+            <h5>No attribute types found</h5>
+            <p className="text-muted">Create your first attribute type to get started.</p>
+          </Card.Body>
+        </Card>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e5e7eb' }}>
-            <thead>
-              <tr style={{ background: '#f9fafb' }}>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Name</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Display Name</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Data Type</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Default Value</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Validation</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Status</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Actions</th>
+        <Table striped bordered hover responsive>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Display Name</th>
+              <th>Data Type</th>
+              <th>Default Value</th>
+              <th>Validation</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {attributeTypes.map((attributeType) => (
+              <tr key={attributeType.id}>
+                <td>
+                  <strong>{attributeType.name}</strong>
+                </td>
+                <td>
+                  {attributeType.displayName}
+                </td>
+                <td>
+                  <Badge bg="light" text="dark" className="text-uppercase">
+                    {attributeType.dataType}
+                  </Badge>
+                </td>
+                <td>
+                  {attributeType.defaultValue || 
+                    <span className="text-muted fst-italic">None</span>
+                  }
+                </td>
+                <td>
+                  {attributeType.validationRegex ? (
+                    <code className="text-break" style={{ fontSize: '0.8em', maxWidth: '200px', display: 'inline-block' }}>
+                      {attributeType.validationRegex}
+                    </code>
+                  ) : (
+                    <span className="text-muted fst-italic">None</span>
+                  )}
+                </td>
+                <td>
+                  <Badge bg={attributeType.active ? 'success' : 'secondary'}>
+                    {attributeType.active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </td>
+                <td>
+                  <Button as={Link} to={`/attribute-types/${attributeType.id}/edit`} variant="outline-primary" size="sm" className="me-2">
+                    Edit
+                  </Button>
+                  <Button variant="outline-danger" size="sm" onClick={() => handleDelete(attributeType.id, attributeType.name)}>
+                    Delete
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {attributeTypes.map((attributeType) => (
-                <tr key={attributeType.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb', fontWeight: '500' }}>
-                    {attributeType.name}
-                  </td>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                    {attributeType.displayName}
-                  </td>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                    <span style={{
-                      background: '#f3f4f6',
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      fontSize: '0.75rem',
-                      textTransform: 'uppercase'
-                    }}>
-                      {attributeType.dataType}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                    {attributeType.defaultValue || 
-                      <span style={{ color: '#6b7280', fontStyle: 'italic' }}>None</span>
-                    }
-                  </td>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                    {attributeType.validationRegex ? (
-                      <code style={{ 
-                        background: '#f3f4f6', 
-                        padding: '2px 4px', 
-                        borderRadius: 3,
-                        fontSize: '0.75rem',
-                        maxWidth: '200px',
-                        display: 'inline-block',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {attributeType.validationRegex}
-                      </code>
-                    ) : (
-                      <span style={{ color: '#6b7280', fontStyle: 'italic' }}>None</span>
-                    )}
-                  </td>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                    <span style={{
-                      background: attributeType.active ? '#dcfce7' : '#fef2f2',
-                      color: attributeType.active ? '#166534' : '#dc2626',
-                      padding: '4px 8px',
-                      borderRadius: 4,
-                      fontSize: '0.75rem',
-                      fontWeight: '500'
-                    }}>
-                      {attributeType.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <Link
-                        to={`/attribute-types/${attributeType.id}/edit`}
-                        style={{
-                          color: '#2563eb',
-                          textDecoration: 'none',
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(attributeType.id, attributeType.name)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#dc2626',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </Table>
       )}
-    </div>
+    </>
   )
 }

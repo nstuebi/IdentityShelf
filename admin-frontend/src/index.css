@@ -423,6 +423,189 @@ h3 {
   color: #6b7280;
 }
 
+/* List page specific styles */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.table-bordered {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e5e7eb;
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-bordered th {
+  padding: 12px;
+  text-align: left;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-weight: 500;
+  color: #374151;
+}
+
+.table-bordered td {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.table-bordered tr:hover {
+  background-color: #f9fafb;
+}
+
+.attribute-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.attribute-item {
+  font-size: 0.875rem;
+}
+
+.attribute-name {
+  font-weight: 500;
+}
+
+.attribute-meta {
+  color: #6b7280;
+  margin-left: 8px;
+}
+
+.no-data {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Data type badge */
+.data-type-badge {
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Validation regex display */
+.validation-regex {
+  background: #f3f4f6;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  max-width: 200px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Courier New', monospace;
+}
+
+/* Delete button for tables */
+.btn-delete {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0;
+}
+
+.btn-delete:hover {
+  color: #b91c1c;
+  text-decoration: underline;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-inactive {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.action-links {
+  display: flex;
+  gap: 12px;
+}
+
+.action-link {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.action-link.view {
+  color: #059669;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Legacy identity table styles (for backwards compatibility) */
+.identity-list-header {
+  margin-bottom: 12px;
+}
+
+.identity-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.identity-table th {
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  padding: 8px;
+  background: #f3f4f6;
+}
+
+.identity-table td {
+  border-bottom: 1px solid #eee;
+  padding: 8px;
+}
+
+.pagination {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-link {
+  margin-right: 8px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.edit-link:hover {
+  text-decoration: underline;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .grid-2 {

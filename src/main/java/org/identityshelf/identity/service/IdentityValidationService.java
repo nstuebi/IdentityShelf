@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.identityshelf.identity.domain.IdentityTypeAttributeMapping;
 import org.identityshelf.identity.web.dto.CreateIdentityRequest;
+import org.identityshelf.identity.web.dto.UpdateIdentityRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,6 +33,21 @@ public class IdentityValidationService {
         }
         
         // Validate all provided attributes
+        if (request.getAttributes() != null) {
+            for (Map.Entry<String, Object> entry : request.getAttributes().entrySet()) {
+                String attributeName = entry.getKey();
+                Object value = entry.getValue();
+                validateField(attributeName, value != null ? value.toString() : null, mappings, errors);
+            }
+        }
+        
+        return new ValidationResult(errors.isEmpty(), errors);
+    }
+    
+    public ValidationResult validateIdentityUpdate(UpdateIdentityRequest request, List<IdentityTypeAttributeMapping> mappings) {
+        List<ValidationError> errors = new ArrayList<>();
+        
+        // For updates, we only validate the provided attributes (partial updates allowed)
         if (request.getAttributes() != null) {
             for (Map.Entry<String, Object> entry : request.getAttributes().entrySet()) {
                 String attributeName = entry.getKey();

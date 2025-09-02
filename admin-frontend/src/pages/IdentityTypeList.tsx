@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { Table, Button, Badge, Spinner, Alert, Row, Col, Card } from 'react-bootstrap'
 import { IdentityType, listIdentityTypes } from '../api/client'
 
 export default function IdentityTypeList() {
@@ -24,113 +25,91 @@ export default function IdentityTypeList() {
     }
   }
 
-  if (loading) return <div>Loading identity types...</div>
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>
+  if (loading) return <div className="text-center my-4"><Spinner animation="border" /></div>
+  if (error) return <Alert variant="danger">Error: {error}</Alert>
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2>Identity Types</h2>
-        <Link 
-          to="/types/new" 
-          style={{ 
-            background: '#2563eb', 
-            color: 'white', 
-            textDecoration: 'none', 
-            padding: '8px 16px', 
-            borderRadius: 6 
-          }}
-        >
-          New Type
-        </Link>
-      </div>
+    <>
+      <Row className="mb-3">
+        <Col>
+          <h2>Identity Types</h2>
+        </Col>
+        <Col xs="auto">
+          <Button as={Link} to="/types/new" variant="primary">
+            New Type
+          </Button>
+        </Col>
+      </Row>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e5e7eb' }}>
+      {types.length === 0 ? (
+        <Card className="text-center p-4">
+          <Card.Body>
+            <h5>No identity types found</h5>
+            <p className="text-muted">Create your first one!</p>
+          </Card.Body>
+        </Card>
+      ) : (
+        <Table striped bordered hover responsive>
           <thead>
-            <tr style={{ background: '#f9fafb' }}>
-              <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Name</th>
-              <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Display Name</th>
-              <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Description</th>
-              <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Attributes</th>
-              <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Status</th>
-              <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #e5e7eb' }}>Actions</th>
+            <tr>
+              <th>Name</th>
+              <th>Display Name</th>
+              <th>Description</th>
+              <th>Attributes</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {types.map((type) => (
-              <tr key={type.id} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                <td style={{ padding: '12px', border: '1px solid #e5e7eb', fontWeight: 'bold' }}>
-                  {type.name}
+              <tr key={type.id}>
+                <td>
+                  <strong>{type.name}</strong>
                 </td>
-                <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
+                <td>
                   {type.displayName}
                 </td>
-                <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                  {type.description || '-'}
+                <td>
+                  {type.description || <span className="text-muted">-</span>}
                 </td>
-                <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {type.attributes.length === 0 ? (
-                      <span style={{ color: '#6b7280', fontStyle: 'italic' }}>No attributes</span>
-                    ) : (
-                      type.attributes
+                <td>
+                  {type.attributes.length === 0 ? (
+                    <span className="text-muted fst-italic">No attributes</span>
+                  ) : (
+                    <div>
+                      {type.attributes
                         .filter(attr => attr.active)
                         .sort((a, b) => a.sortOrder - b.sortOrder)
                         .map(attr => (
-                          <div key={attr.id} style={{ fontSize: '0.875rem' }}>
-                            <span style={{ fontWeight: '500' }}>{attr.displayName}</span>
-                            <span style={{ color: '#6b7280', marginLeft: '8px' }}>
+                          <div key={attr.id} className="mb-1">
+                            <span className="fw-medium">{attr.displayName}</span>
+                            <small className="text-muted ms-2">
                               ({attr.dataType.toLowerCase()}{attr.required ? ', required' : ''})
-                            </span>
+                            </small>
                           </div>
                         ))
-                    )}
-                  </div>
+                      }
+                    </div>
+                  )}
                 </td>
-                <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                  <span style={{ 
-                    padding: '4px 8px', 
-                    borderRadius: '4px', 
-                    fontSize: '0.875rem',
-                    background: type.active ? '#dcfce7' : '#fef2f2',
-                    color: type.active ? '#166534' : '#dc2626'
-                  }}>
+                <td>
+                  <Badge bg={type.active ? 'success' : 'secondary'}>
                     {type.active ? 'Active' : 'Inactive'}
-                  </span>
+                  </Badge>
                 </td>
-                <td style={{ padding: '12px', border: '1px solid #e5e7eb' }}>
-                  <Link 
-                    to={`/types/${type.name}/edit`}
-                    style={{ 
-                      color: '#2563eb', 
-                      textDecoration: 'none',
-                      marginRight: '12px'
-                    }}
-                  >
+                <td>
+                  <Button as={Link} to={`/types/${type.name}/edit`} variant="outline-primary" size="sm" className="me-2">
                     Edit
-                  </Link>
-                  <Link 
-                    to={`/types/${type.name}/view`}
-                    style={{ 
-                      color: '#059669', 
-                      textDecoration: 'none'
-                    }}
-                  >
+                  </Button>
+                  <Button as={Link} to={`/types/${type.name}/view`} variant="outline-success" size="sm">
                     View
-                  </Link>
+                  </Button>
                 </td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
-
-      {types.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-          No identity types found. Create your first one!
-        </div>
+        </Table>
       )}
-    </div>
+    </>
   )
 }

@@ -1,5 +1,6 @@
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { Container, Navbar, Nav, NavDropdown, Button } from 'react-bootstrap'
 import IdentitiesList from './pages/IdentitiesList'
 import IdentityForm from './pages/IdentityForm'
 import IdentityTypeList from './pages/IdentityTypeList'
@@ -25,32 +26,40 @@ export default function App() {
   }, [])
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', margin: '1.5rem' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-          <h1 style={{ margin: 0 }}>IdentityShelf Admin</h1>
-          <div style={{ fontSize: '0.75em', color: '#6b7280', marginTop: '4px' }}>
-            <span>Frontend: {new Date(frontendBuildTime).toLocaleString()}</span>
-            {buildInfo && (
-              <>
-                <span style={{ margin: '0 8px' }}>•</span>
-                <span>Backend: {new Date(buildInfo.buildTime).toLocaleString()}</span>
-              </>
-            )}
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <nav style={{ display: 'flex', gap: 12 }}>
-            <Link to="/">Identities</Link>
-            <Link to="/types">Identity Types</Link>
-            <Link to="/attribute-types">Attribute Types</Link>
-            <Link to="/identifier-types">Identifier Types</Link>
-            <Link to="/search">🔍 Search</Link>
+    <>
+      <Navbar bg="dark" variant="dark" expand="lg" className="mb-4">
+        <Container>
+          <Navbar.Brand as={Link} to="/">
+            <div>
+              <div>IdentityShelf Admin</div>
+              <div style={{ fontSize: '0.75em', opacity: 0.8 }}>
+                <span>Frontend: {new Date(frontendBuildTime).toLocaleString()}</span>
+                {buildInfo && (
+                  <>
+                    <span style={{ margin: '0 8px' }}>•</span>
+                    <span>Backend: {new Date(buildInfo.buildTime).toLocaleString()}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </Navbar.Brand>
+          
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="me-auto">
+              <Nav.Link as={Link} to="/">Identities</Nav.Link>
+              <Nav.Link as={Link} to="/types">Identity Types</Nav.Link>
+              <Nav.Link as={Link} to="/attribute-types">Attribute Types</Nav.Link>
+              <Nav.Link as={Link} to="/identifier-types">Identifier Types</Nav.Link>
+              <Nav.Link as={Link} to="/search">🔍 Search</Nav.Link>
+            </Nav>
             <NewButton />
-          </nav>
-        </div>
-      </header>
-      <main style={{ marginTop: '1rem' }}>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
+      
+      <Container>
+        <main>
         <Routes>
           {/* Identity routes */}
           <Route path="/" element={<IdentitiesList />} />
@@ -81,136 +90,30 @@ export default function App() {
           {/* Identifier Search */}
           <Route path="/search" element={<IdentifierSearch />} />
         </Routes>
-      </main>
-    </div>
+        </main>
+      </Container>
+    </>
   )
 }
 
 function NewButton() {
   const navigate = useNavigate()
-  const [showDropdown, setShowDropdown] = useState(false)
   
   return (
-    <div style={{ position: 'relative' }}>
-      <button 
-        onClick={() => setShowDropdown(!showDropdown)}
-        style={{ 
-          background: '#2563eb', 
-          color: 'white', 
-          border: 'none', 
-          padding: '6px 10px', 
-          borderRadius: 6,
-          cursor: 'pointer'
-        }}
-      >
-        New +
-      </button>
-      
-      {showDropdown && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          right: 0,
-          background: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          minWidth: '150px',
-          zIndex: 1000
-        }}>
-          <button
-            onClick={() => {
-              navigate('/new')
-              setShowDropdown(false)
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              borderBottom: '1px solid #f3f4f6'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            New Identity
-          </button>
-          <button
-            onClick={() => {
-              navigate('/types/new')
-              setShowDropdown(false)
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              borderBottom: '1px solid #f3f4f6'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            New Identity Type
-          </button>
-          <button
-            onClick={() => {
-              navigate('/attribute-types/create')
-              setShowDropdown(false)
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer',
-              borderBottom: '1px solid #f3f4f6'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            New Attribute Type
-          </button>
-          <button
-            onClick={() => {
-              navigate('/identifier-types/new')
-              setShowDropdown(false)
-            }}
-            style={{
-              width: '100%',
-              padding: '8px 12px',
-              border: 'none',
-              background: 'none',
-              textAlign: 'left',
-              cursor: 'pointer'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
-          >
-            New Identifier Type
-          </button>
-        </div>
-      )}
-      
-      {/* Click outside to close dropdown */}
-      {showDropdown && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 999
-          }}
-          onClick={() => setShowDropdown(false)}
-        />
-      )}
-    </div>
+    <NavDropdown title="New +" id="basic-nav-dropdown" align="end">
+      <NavDropdown.Item onClick={() => navigate('/new')}>
+        New Identity
+      </NavDropdown.Item>
+      <NavDropdown.Item onClick={() => navigate('/types/new')}>
+        New Identity Type
+      </NavDropdown.Item>
+      <NavDropdown.Item onClick={() => navigate('/attribute-types/create')}>
+        New Attribute Type
+      </NavDropdown.Item>
+      <NavDropdown.Item onClick={() => navigate('/identifier-types/new')}>
+        New Identifier Type
+      </NavDropdown.Item>
+    </NavDropdown>
   )
 }
 

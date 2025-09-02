@@ -115,6 +115,30 @@ public class IdentityService {
         return identityRepository.findAll(pageable).map(this::toResponse);
     }
 
+    private void updateIdentityAttributes(Identity identity, Map<String, Object> attributesMap, 
+                                        List<IdentityTypeAttributeMapping> mappings) {
+        logger.debug("Updating attributes for identity: {}", identity.getUuid());
+        
+        // Remove existing attribute values
+        identity.getValues().clear();
+        
+        // Add new attribute values
+        for (IdentityTypeAttributeMapping mapping : mappings) {
+            String attributeName = mapping.getAttributeType().getName();
+            Object value = attributesMap.get(attributeName);
+            
+            if (value != null) {
+                IdentityAttributeValue attributeValue = new IdentityAttributeValue();
+                attributeValue.setIdentity(identity);
+                attributeValue.setAttributeType(mapping.getAttributeType());
+                attributeValue.setValue(String.valueOf(value));
+                
+                identity.getValues().add(attributeValue);
+                logger.debug("Updated attribute '{}' with value: {}", attributeName, value);
+            }
+        }
+    }
+
     @Transactional(readOnly = true)
     public IdentityResponse getIdentity(UUID id) {
         Identity identity = identityRepository.findById(id)
@@ -123,22 +147,51 @@ public class IdentityService {
     }
 
     public IdentityResponse updateIdentity(UUID id, UpdateIdentityRequest request) {
-        Identity identity = identityRepository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Identity not found"));
+        logger.debug("Updating identity with id: {}", id);
+        
+        try {
+            Identity identity = identityRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Identity not found"));
 
-        if (request.getDisplayName() != null) {
-            identity.setDisplayName(request.getDisplayName());
-        }
-        if (request.getStatus() != null) {
-            try {
-                identity.setStatus(IdentityStatus.valueOf(request.getStatus().toUpperCase()));
-            } catch (IllegalArgumentException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status value: " + request.getStatus());
+            // Get attribute mappings for validation
+            List<IdentityTypeAttributeMapping> mappings = mappingRepository
+                .findActiveByIdentityTypeWithAttributeType(identity.getIdentityType().getUuid());
+            
+            // Validate the request if attributes are provided
+            if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
+                ValidationResult validationResult = validationService.validateIdentityUpdate(request, mappings);
+                if (!validationResult.isValid()) {
+                    logger.warn("Validation failed for identity update: {}", validationResult.getErrors());
+                    throw new ValidationException("Validation failed", validationResult.getErrors());
+                }
             }
-        }
 
-        Identity saved = identityRepository.save(identity);
-        return toResponse(saved);
+            // Update basic fields
+            if (request.getDisplayName() != null) {
+                identity.setDisplayName(request.getDisplayName());
+            }
+            if (request.getStatus() != null) {
+                try {
+                    identity.setStatus(IdentityStatus.valueOf(request.getStatus().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status value: " + request.getStatus());
+                }
+            }
+
+            // Update attributes if provided
+            if (request.getAttributes() != null) {
+                updateIdentityAttributes(identity, request.getAttributes(), mappings);
+            }
+
+            Identity saved = identityRepository.save(identity);
+            logger.info("Successfully updated identity: {}", id);
+            return toResponse(saved);
+        } catch (ValidationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error updating identity {}: {}", id, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update identity: " + e.getMessage());
+        }
     }
 
     public void deleteIdentity(UUID id) {
