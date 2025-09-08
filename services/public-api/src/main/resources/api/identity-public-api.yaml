@@ -1,0 +1,719 @@
+openapi: 3.0.3
+info:
+  title: IdentityShelf Public API
+  description: Public API for IdentityShelf identity management system
+  version: 1.0.0
+  contact:
+    name: IdentityShelf Team
+    email: support@identityshelf.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.identityshelf.com/v1
+    description: Production server
+  - url: https://staging-api.identityshelf.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is running
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /identities:
+    get:
+      summary: Search identities
+      description: Search for identities using various criteria
+      tags:
+        - Identities
+      parameters:
+        - name: query
+          in: query
+          description: Search query
+          required: false
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Identity type filter
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Identity status filter
+          required: false
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE, SUSPENDED, PENDING]
+        - name: page
+          in: query
+          description: Page number (0-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Page size
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: List of identities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentitySearchResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create identity
+      description: Create a new identity
+      tags:
+        - Identities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIdentityRequest'
+      responses:
+        '201':
+          description: Identity created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Identity already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identities/{identityId}:
+    get:
+      summary: Get identity by ID
+      description: Retrieve a specific identity by its ID
+      tags:
+        - Identities
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: Identity ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Identity found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Identity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update identity
+      description: Update an existing identity
+      tags:
+        - Identities
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: Identity ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIdentityRequest'
+      responses:
+        '200':
+          description: Identity updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Identity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete identity
+      description: Delete an identity
+      tags:
+        - Identities
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: Identity ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Identity deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Identity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identities/{identityId}/identifiers:
+    get:
+      summary: Get identity identifiers
+      description: Get all identifiers for a specific identity
+      tags:
+        - Identities
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: Identity ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of identifiers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentifierResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Identity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Add identifier to identity
+      description: Add a new identifier to an existing identity
+      tags:
+        - Identities
+      parameters:
+        - name: identityId
+          in: path
+          required: true
+          description: Identity ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddIdentifierRequest'
+      responses:
+        '201':
+          description: Identifier added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentifierResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Identity not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Identifier already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identities/search:
+    post:
+      summary: Advanced identity search
+      description: Perform advanced search on identities
+      tags:
+        - Identities
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentitySearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentitySearchResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /identifiers/search:
+    post:
+      summary: Search identifiers
+      description: Search for identifiers across all identities
+      tags:
+        - Identifiers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdentifierSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IdentifierSearchResult'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API Key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: integer
+          description: Uptime in seconds
+
+    IdentityResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        displayName:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, PENDING]
+        type:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        attributes:
+          type: object
+          additionalProperties: true
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentifierResponse'
+
+    CreateIdentityRequest:
+      type: object
+      required:
+        - type
+        - displayName
+      properties:
+        type:
+          type: string
+          description: Identity type
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, PENDING]
+          default: ACTIVE
+        attributes:
+          type: object
+          additionalProperties: true
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AddIdentifierRequest'
+
+    UpdateIdentityRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, PENDING]
+        attributes:
+          type: object
+          additionalProperties: true
+
+    AddIdentifierRequest:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          description: Identifier type (email, phone, username, etc.)
+        value:
+          type: string
+          description: Identifier value
+        primary:
+          type: boolean
+          default: false
+          description: Whether this is the primary identifier
+
+    IdentifierResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        value:
+          type: string
+        primary:
+          type: boolean
+        verified:
+          type: boolean
+        verifiedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    IdentitySearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: General search query
+        type:
+          type: string
+          description: Filter by identity type
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SUSPENDED, PENDING]
+        attributes:
+          type: object
+          additionalProperties: true
+          description: Filter by attribute values
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentifierSearchCriteria'
+        page:
+          type: integer
+          minimum: 0
+          default: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        sort:
+          type: string
+          enum: [displayName, createdAt, updatedAt]
+          default: createdAt
+        order:
+          type: string
+          enum: [ASC, DESC]
+          default: DESC
+
+    IdentifierSearchCriteria:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+        verified:
+          type: boolean
+        primary:
+          type: boolean
+
+    IdentitySearchResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentityResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+
+    IdentifierSearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Search query for identifier values
+        types:
+          type: array
+          items:
+            type: string
+          description: Filter by identifier types
+        verified:
+          type: boolean
+          description: Filter by verification status
+        primary:
+          type: boolean
+          description: Filter by primary status
+        page:
+          type: integer
+          minimum: 0
+          default: 0
+        size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    IdentifierSearchResult:
+      type: object
+      properties:
+        identifier:
+          $ref: '#/components/schemas/IdentifierResponse'
+        identity:
+          $ref: '#/components/schemas/IdentityResponse'
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        status:
+          type: integer
+        details:
+          type: object
+          additionalProperties: true
+
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Identities
+    description: Identity management operations
+  - name: Identifiers
+    description: Identifier management operations

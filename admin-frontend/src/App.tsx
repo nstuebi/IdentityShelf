@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Container, Navbar, Nav, NavDropdown, Button } from 'react-bootstrap'
 import IdentitiesList from './pages/IdentitiesList'
 import IdentityForm from './pages/IdentityForm'
+import IdentityView from './pages/IdentityView'
 import IdentityTypeList from './pages/IdentityTypeList'
 import IdentityTypeForm from './pages/IdentityTypeForm'
 import IdentityTypeView from './pages/IdentityTypeView'
@@ -64,6 +65,7 @@ export default function App() {
           {/* Identity routes */}
           <Route path="/" element={<IdentitiesList />} />
           <Route path="/new" element={<IdentityForm mode="create" />} />
+          <Route path=":id/view" element={<IdentityView />} />
           <Route path=":id/edit" element={<IdentityForm mode="edit" />} />
           
           {/* Identity Type routes */}

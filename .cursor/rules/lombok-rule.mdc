@@ -1,35 +1,64 @@
 ---
 alwaysApply: true
 ---
-# Lombok Best Practices für IdentityShelf
+# Lombok Best Practices für IdentityShelf - DDD Aligned
+
+# DDD Architecture Rules:
+domain_layer_restrictions:
+  - "NEVER use Lombok in shared/identity-core (domain layer)"
+  - "Domain layer must be pure Java with explicit getters/setters"
+  - "No framework dependencies in domain layer"
+
+# Lombok Usage by Layer:
 lombok_annotations:
-  entities:
+  # JPA Entities (identity-data layer only)
+  jpa_entities:
     - "@Data"           # Getter, Setter, toString, equals, hashCode
     - "@NoArgsConstructor"  # JPA-Requirement
-    - "@EqualsAndHashCode(exclude = {'id', 'createdAt', 'updatedAt'})"  # JPA-sicher
+    - "@EqualsAndHashCode(exclude = {'uuid', 'createdAt', 'updatedAt'})"  # JPA-sicher
   
+  # DTOs (service layer)
   dtos:
     - "@Data"           # Vollständige Funktionalität
     - "@AllArgsConstructor"  # Für Builder-Pattern
   
+  # Services (service layer)
   services:
     - "@Slf4j"          # Logger
     - "@RequiredArgsConstructor"  # Constructor injection
   
+  # Controllers (service layer)
   controllers:
     - "@Slf4j"          # Logger
     - "@RequiredArgsConstructor"  # Constructor injection
 
-# Ausnahmen (nicht mit Lombok optimieren):
-exclude_from_lombok:
-  - Klassen mit komplexer Business-Logik
-  - Klassen mit @PrePersist/@PreUpdate
-  - Klassen mit custom equals/hashCode
-  - Klassen mit Builder-Pattern
+# Layer-specific Rules:
+layer_rules:
+  domain_layer:
+    location: "shared/identity-core/"
+    restrictions:
+      - "NO Lombok annotations"
+      - "NO Spring annotations"
+      - "NO JPA annotations"
+      - "Explicit getters/setters only"
+  
+  persistence_layer:
+    location: "shared/identity-data/"
+    allowed:
+      - "JPA entities with Lombok"
+      - "Repository implementations"
+      - "Database-specific code"
+  
+  service_layer:
+    location: "services/*/"
+    allowed:
+      - "Spring annotations"
+      - "Lombok for DTOs and services"
+      - "Controller annotations"
 
-# Lombok-Prioritäten:
+# Lombok-Prioritäten (only for non-domain layers):
 priority_order:
-  1. "@Data" für einfache Klassen
+  1. "@Data" für JPA-Entities (identity-data only)
   2. "@Getter/@Setter" für spezifische Bedürfnisse
   3. "@NoArgsConstructor" für JPA-Entities
   4. "@AllArgsConstructor" für DTOs

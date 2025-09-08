@@ -66,7 +66,10 @@ export default function IdentitiesList() {
               </td>
               <td>{new Date(i.createdAt).toLocaleString()}</td>
               <td>
-                <Button as={Link} to={`/${i.id}/edit`} variant="outline-primary" size="sm" className="me-2">
+                <Button as={Link as any} to={`/${i.id}/view`} variant="outline-info" size="sm" className="me-2">
+                  View
+                </Button>
+                <Button as={Link as any} to={`/${i.id}/edit`} variant="outline-primary" size="sm" className="me-2">
                   Edit
                 </Button>
                 <Button variant="outline-danger" size="sm" onClick={() => onDelete(i.id)}>

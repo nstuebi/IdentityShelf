@@ -1,0 +1,54 @@
+plugins {
+    id 'java-library'
+}
+
+// JVM arguments for Java 24 compatibility with Lombok
+tasks.withType(JavaCompile) {
+    options.fork = true
+    options.forkOptions.jvmArgs += [
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED',
+        '--add-opens', 'jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+        '-Dlombok.disable.unsafe=true'
+    ]
+}
+
+dependencies {
+    api project(':shared:identity-core')
+    
+    // Spring Framework
+    implementation 'org.springframework:spring-context:6.1.0'
+    implementation 'org.springframework:spring-tx:6.1.0'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure:3.2.0'
+    implementation 'org.springframework.boot:spring-boot-configuration-processor:3.2.0'
+    
+    // Spring Data
+    implementation 'org.springframework.data:spring-data-commons:3.1.0'
+    implementation 'org.springframework.data:spring-data-jpa:3.1.0'
+    
+    // JPA/Hibernate
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    implementation 'org.hibernate.orm:hibernate-core:6.4.0.Final'
+    
+    // Lombok - using latest version with Java 24 compatibility fixes
+    compileOnly 'org.projectlombok:lombok:1.18.40'
+    annotationProcessor 'org.projectlombok:lombok:1.18.40'
+    
+    // yaGen for DDL generation and audit
+    implementation 'com.github.gekoh.yagen:yagen-generator-lib:6.4'
+    annotationProcessor 'com.github.gekoh.yagen:yagen-generator-lib:6.4'
+    
+    // Jakarta annotations
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+}

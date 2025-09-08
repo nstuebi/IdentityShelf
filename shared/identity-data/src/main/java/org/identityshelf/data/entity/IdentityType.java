@@ -1,0 +1,99 @@
+package org.identityshelf.data.entity;
+
+import jakarta.persistence.*;
+import com.github.gekoh.yagen.api.Auditable;
+import com.github.gekoh.yagen.api.TemporalEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Entity
+@Table(name = "identity_types")
+@Auditable
+@TemporalEntity
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(exclude = {"uuid", "createdAt", "updatedAt"})
+public class IdentityType {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "uuid", columnDefinition = "uuid")
+    private UUID uuid;
+    
+    @Column(name = "name", nullable = false, unique = true)
+    private String name;
+    
+    @Column(name = "display_name", nullable = false)
+    private String displayName;
+    
+    @Column(name = "description")
+    private String description;
+    
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
+    
+    // @Temporal  // yaGen temporal support for audit tracking
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+    
+    // @Temporal  // yaGen temporal support for audit tracking
+    @Column(name = "updated_at", nullable = false)
+    private OffsetDateTime updatedAt;
+    
+    @OneToMany(mappedBy = "identityType", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IdentityTypeAttributeMapping> attributeMappings = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "identityType", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<IdentityTypeIdentifierMapping> identifierMappings = new ArrayList<>();
+    
+    // JPA lifecycle methods
+    @PrePersist
+    protected void onCreate() {
+        createdAt = OffsetDateTime.now();
+        updatedAt = OffsetDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
+    
+    // Helper methods for attribute mappings
+    public void addAttributeMapping(IdentityTypeAttributeMapping mapping) {
+        attributeMappings.add(mapping);
+        mapping.setIdentityType(this);
+    }
+
+    public void removeAttributeMapping(IdentityTypeAttributeMapping mapping) {
+        attributeMappings.remove(mapping);
+        mapping.setIdentityType(null);
+    }
+    
+    public IdentityTypeAttributeMapping addAttribute(AttributeType attribute, int sortOrder, boolean required) {
+        IdentityTypeAttributeMapping mapping = new IdentityTypeAttributeMapping(this, attribute, sortOrder, required);
+        addAttributeMapping(mapping);
+        return mapping;
+    }
+    
+    // Helper methods for identifier mappings
+    public void addIdentifierMapping(IdentityTypeIdentifierMapping mapping) {
+        identifierMappings.add(mapping);
+        mapping.setIdentityType(this);
+    }
+
+    public void removeIdentifierMapping(IdentityTypeIdentifierMapping mapping) {
+        identifierMappings.remove(mapping);
+        mapping.setIdentityType(null);
+    }
+    
+    public IdentityTypeIdentifierMapping addIdentifier(IdentifierType identifier, int sortOrder, boolean required, boolean primaryCandidate) {
+        IdentityTypeIdentifierMapping mapping = new IdentityTypeIdentifierMapping(this, identifier, sortOrder, required, primaryCandidate);
+        addIdentifierMapping(mapping);
+        return mapping;
+    }
+}

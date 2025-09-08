@@ -1,7 +1,9 @@
 # Gradle
 .gradle/
 build/
+C:/DEV/Build/
 !build/libs/*.jar
+!build/services/*.jar
 
 # IDE files
 .idea/

@@ -1,1 +1,7 @@
 rootProject.name = 'IdentityShelf'
+
+include 'shared:identity-core'
+include 'shared:identity-data'
+include 'services:public-api'
+include 'services:admin-api'
+include 'services:job-system'

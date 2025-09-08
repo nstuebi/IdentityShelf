@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react'
-import { createIdentity, getIdentity, updateIdentity, listIdentityTypes, getIdentityType, getMappingsForIdentityType, IdentityType, IdentityTypeAttributeMapping } from '../api/client'
+import { createIdentity, getIdentity, updateIdentity, listIdentityTypes, getIdentityType, getMappingsForIdentityType, getIdentityTypeIdentifierMappings, getIdentifiersForIdentity, createIdentifier, updateIdentifier, deleteIdentifier, IdentityType, IdentityTypeAttributeMapping, IdentityTypeIdentifierMapping, IdentityIdentifier } from '../api/client'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Form, Button, Alert, Card, Row, Col, Spinner } from 'react-bootstrap'
 
@@ -10,6 +10,9 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
   const [identityTypes, setIdentityTypes] = useState<IdentityType[]>([])
   const [attributeMappings, setAttributeMappings] = useState<IdentityTypeAttributeMapping[]>([])
   const [attributeValues, setAttributeValues] = useState<Record<string, any>>({})
+  const [identifierMappings, setIdentifierMappings] = useState<IdentityTypeIdentifierMapping[]>([])
+  const [identifierValues, setIdentifierValues] = useState<Record<string, any>>({})
+  const [existingIdentifiers, setExistingIdentifiers] = useState<IdentityIdentifier[]>([])
   const [displayName, setDisplayName] = useState<string>('')
   const [status, setStatus] = useState<string>('ACTIVE')
   const [error, setError] = useState<string | null>(null)
@@ -38,6 +41,21 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
           const mappings = await getMappingsForIdentityType(identityType.id)
           setAttributeMappings(mappings)
           
+          // Load identifier mappings for this identity type
+          const identifierMappings = await getIdentityTypeIdentifierMappings(identityType.id)
+          setIdentifierMappings(identifierMappings)
+          
+          // Load existing identifiers for this identity
+          const existingIds = await getIdentifiersForIdentity(identity.id)
+          setExistingIdentifiers(existingIds)
+          
+          // Populate identifier values from existing identifiers
+          const identifierValues: Record<string, any> = {}
+          existingIds.forEach(identifier => {
+            identifierValues[identifier.identifierTypeName] = identifier.identifierValue
+          })
+          setIdentifierValues(identifierValues)
+          
           // Populate the form with existing attribute values
           setAttributeValues(identity.attributes)
           
@@ -51,28 +69,47 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     }
   }, [mode, id])
 
-  // When identity type changes in create mode, load its attributes and initialize defaults
+  // When identity type changes in create mode, load its attributes and identifiers and initialize defaults
   useEffect(() => {
     if (mode === 'create' && selectedIdentityType) {
-      getMappingsForIdentityType(selectedIdentityType)
-        .then((mappings) => {
-          setAttributeMappings(mappings)
-          // Initialize attribute values with defaults
-          const initialValues: Record<string, any> = {}
-          mappings.forEach((mapping) => {
-            const defaultValue = mapping.effectiveDefaultValue || mapping.overrideDefaultValue || mapping.baseDefaultValue
-            if (defaultValue) {
-              initialValues[mapping.attributeTypeName] = defaultValue
-            } else {
-              initialValues[mapping.attributeTypeName] = ''
-            }
-          })
-          setAttributeValues(initialValues)
+      Promise.all([
+        getMappingsForIdentityType(selectedIdentityType),
+        getIdentityTypeIdentifierMappings(selectedIdentityType)
+      ]).then(([attributeMappings, identifierMappings]) => {
+        setAttributeMappings(attributeMappings)
+        setIdentifierMappings(identifierMappings)
+        
+        // Initialize attribute values with defaults
+        const initialAttributeValues: Record<string, any> = {}
+        attributeMappings.forEach((mapping) => {
+          const defaultValue = mapping.effectiveDefaultValue || mapping.overrideDefaultValue || mapping.baseDefaultValue
+          if (defaultValue) {
+            initialAttributeValues[mapping.attributeTypeName] = defaultValue
+          } else {
+            initialAttributeValues[mapping.attributeTypeName] = ''
+          }
         })
-        .catch((e) => setError(String(e)))
+        setAttributeValues(initialAttributeValues)
+        
+        // Initialize identifier values with defaults
+        const initialIdentifierValues: Record<string, any> = {}
+        identifierMappings.forEach((mapping) => {
+          const defaultValue = mapping.effectiveDefaultValue || mapping.overrideDefaultValue || mapping.baseDefaultValue
+          if (defaultValue) {
+            initialIdentifierValues[mapping.identifierTypeName] = defaultValue
+          } else {
+            initialIdentifierValues[mapping.identifierTypeName] = ''
+          }
+        })
+        setIdentifierValues(initialIdentifierValues)
+        setExistingIdentifiers([]) // Clear existing identifiers for create mode
+      }).catch((e) => setError(String(e)))
     } else if (mode === 'create' && !selectedIdentityType) {
       setAttributeMappings([])
       setAttributeValues({})
+      setIdentifierMappings([])
+      setIdentifierValues({})
+      setExistingIdentifiers([])
     }
   }, [selectedIdentityType, mode])
 
@@ -80,6 +117,13 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     setAttributeValues((prev: Record<string, any>) => ({
       ...prev,
       [attributeName]: value
+    }))
+  }
+
+  const handleIdentifierChange = (identifierTypeName: string, value: any) => {
+    setIdentifierValues((prev: Record<string, any>) => ({
+      ...prev,
+      [identifierTypeName]: value
     }))
   }
 
@@ -148,6 +192,71 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
     }
   }
 
+  const renderIdentifierField = (mapping: IdentityTypeIdentifierMapping) => {
+    const value = identifierValues[mapping.identifierTypeName] || ''
+    const validationRegex = mapping.effectiveValidationRegex || mapping.overrideValidationRegex || mapping.baseValidationRegex
+    
+    switch (mapping.identifierDataType) {
+      case 'BOOLEAN':
+        return (
+          <Form.Check
+            type="checkbox"
+            checked={value === true || value === 'true'}
+            onChange={(e) => handleIdentifierChange(mapping.identifierTypeName, e.target.checked)}
+            required={mapping.required}
+          />
+        )
+      case 'INTEGER':
+      case 'DECIMAL':
+        return (
+          <Form.Control
+            type="number"
+            value={value}
+            onChange={(e) => handleIdentifierChange(mapping.identifierTypeName, e.target.value)}
+            required={mapping.required}
+            step={mapping.identifierDataType === 'DECIMAL' ? '0.01' : '1'}
+          />
+        )
+      case 'DATE':
+        return (
+          <Form.Control
+            type="date"
+            value={value}
+            onChange={(e) => handleIdentifierChange(mapping.identifierTypeName, e.target.value)}
+            required={mapping.required}
+          />
+        )
+      case 'DATETIME':
+        return (
+          <Form.Control
+            type="datetime-local"
+            value={value}
+            onChange={(e) => handleIdentifierChange(mapping.identifierTypeName, e.target.value)}
+            required={mapping.required}
+          />
+        )
+      case 'EMAIL':
+        return (
+          <Form.Control
+            type="email"
+            value={value}
+            onChange={(e) => handleIdentifierChange(mapping.identifierTypeName, e.target.value)}
+            required={mapping.required}
+          />
+        )
+      default: // STRING, PHONE, URL, SELECT, MULTI_SELECT
+        return (
+          <Form.Control
+            type="text"
+            value={value}
+            onChange={(e) => handleIdentifierChange(mapping.identifierTypeName, e.target.value)}
+            required={mapping.required}
+            placeholder={validationRegex ? 'Format: ' + validationRegex : undefined}
+          />
+        )
+    }
+  }
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -173,6 +282,20 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
       setLoading(false)
       return
     }
+
+    // Validate required identifiers
+    const missingRequiredIdentifiers = identifierMappings
+      .filter(mapping => mapping.required)
+      .filter(mapping => {
+        const value = identifierValues[mapping.identifierTypeName]
+        return value === undefined || value === null || value === ''
+      })
+    
+    if (missingRequiredIdentifiers.length > 0) {
+      setError(`Please fill in all required identifiers: ${missingRequiredIdentifiers.map(mapping => mapping.identifierTypeDisplayName).join(', ')}`)
+      setLoading(false)
+      return
+    }
     
     try {
       if (mode === 'create') {
@@ -183,10 +306,29 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
           status: status
         }
         
-        await createIdentity({ 
+        // Create the identity first
+        const newIdentity = await createIdentity({ 
           identityType: selectedIdentityType,
           attributes: allAttributes
         })
+        
+        // Then create identifiers
+        const identifierPromises = identifierMappings
+          .filter(mapping => {
+            const value = identifierValues[mapping.identifierTypeName]
+            return value !== undefined && value !== null && value !== ''
+          })
+          .map(mapping => 
+            createIdentifier({
+              identityId: newIdentity.id,
+              identifierTypeId: mapping.identifierTypeId,
+              identifierValue: String(identifierValues[mapping.identifierTypeName]),
+              primary: mapping.primaryCandidate
+            })
+          )
+        
+        await Promise.all(identifierPromises)
+        
       } else if (id) {
         // For edit mode, send all the current attribute values plus the direct fields
         const allAttributes = {
@@ -200,6 +342,47 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
           status: status,
           attributes: allAttributes
         })
+        
+        // Handle identifier updates/creates/deletes
+        const currentIdentifierMap = new Map<string, IdentityIdentifier>()
+        existingIdentifiers.forEach(identifier => {
+          currentIdentifierMap.set(identifier.identifierTypeName, identifier)
+        })
+        
+        const identifierPromises: Promise<any>[] = []
+        
+        // Process each identifier mapping
+        identifierMappings.forEach(mapping => {
+          const value = identifierValues[mapping.identifierTypeName]
+          const existingIdentifier = currentIdentifierMap.get(mapping.identifierTypeName)
+          
+          if (value !== undefined && value !== null && value !== '') {
+            // Value provided
+            if (existingIdentifier) {
+              // Update existing identifier if value changed
+              if (existingIdentifier.identifierValue !== String(value)) {
+                identifierPromises.push(
+                  updateIdentifier(existingIdentifier.id, String(value), mapping.primaryCandidate)
+                )
+              }
+            } else {
+              // Create new identifier
+              identifierPromises.push(
+                createIdentifier({
+                  identityId: id,
+                  identifierTypeId: mapping.identifierTypeId,
+                  identifierValue: String(value),
+                  primary: mapping.primaryCandidate
+                })
+              )
+            }
+          } else if (existingIdentifier) {
+            // No value provided but identifier exists - delete it
+            identifierPromises.push(deleteIdentifier(existingIdentifier.id))
+          }
+        })
+        
+        await Promise.all(identifierPromises)
       }
       navigate('/')
     } catch (e) {
@@ -337,6 +520,33 @@ export default function IdentityForm({ mode }: { mode: 'create' | 'edit' }) {
                   <option value="ESTABLISHED">Established</option>
                 </Form.Select>
               </Form.Group>
+            </Card.Body>
+          </Card>
+        )}
+
+        {selectedIdentityType && identifierMappings.length > 0 && (
+          <Card className="mb-4">
+            <Card.Header>
+              <Card.Title className="mb-0">Identity Identifiers</Card.Title>
+            </Card.Header>
+            <Card.Body>
+              {identifierMappings
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map(mapping => (
+                  <Form.Group key={mapping.id} className="mb-3">
+                    <Form.Label>
+                      {mapping.identifierTypeDisplayName}
+                      {mapping.required && <span className="text-danger"> *</span>}
+                      {mapping.primaryCandidate && <span className="text-primary ms-1">(Primary)</span>}
+                    </Form.Label>
+                    {mapping.identifierTypeDescription && (
+                      <Form.Text className="text-muted d-block mb-2">
+                        {mapping.identifierTypeDescription}
+                      </Form.Text>
+                    )}
+                    {renderIdentifierField(mapping)}
+                  </Form.Group>
+                ))}
             </Card.Body>
           </Card>
         )}
