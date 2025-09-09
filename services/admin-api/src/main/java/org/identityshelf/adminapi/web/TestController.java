@@ -1,4 +1,4 @@
-package org.identityshelf.adminapi.config;
+package org.identityshelf.adminapi.web;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

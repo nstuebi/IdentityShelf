@@ -6,13 +6,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.identityshelf.publicapi.web.dto.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,42 +19,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/v1/identities")
 @Tag(name = "Identities", description = "Identity management operations")
-@SecurityRequirement(name = "ApiKeyAuth")
-@SecurityRequirement(name = "BearerAuth")
 public class IdentityController {
     
-    @Operation(summary = "Search identities", description = "Search for identities using various criteria")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "List of identities",
-                    content = @Content(schema = @Schema(implementation = IdentitySearchResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Bad request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "401", description = "Unauthorized",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "Internal server error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping
-    public ResponseEntity<IdentitySearchResponse> searchIdentities(
-            @Parameter(description = "Search query") @RequestParam(required = false) String query,
-            @Parameter(description = "Identity type filter") @RequestParam(required = false) String type,
-            @Parameter(description = "Identity status filter") @RequestParam(required = false) String status,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size) {
-        
-        // TODO: Implement actual search logic
-        IdentitySearchResponse response = new IdentitySearchResponse(
-            List.of(), // content
-            page,
-            size,
-            0L, // totalElements
-            0, // totalPages
-            true, // first
-            true // last
-        );
-        
-        return ResponseEntity.ok(response);
-    }
     
     @Operation(summary = "Create identity", description = "Create a new identity")
     @ApiResponses(value = {
@@ -199,30 +160,4 @@ public class IdentityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
     
-    @Operation(summary = "Advanced identity search", description = "Perform advanced search on identities")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Search results",
-                    content = @Content(schema = @Schema(implementation = IdentitySearchResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Bad request",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "401", description = "Unauthorized",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-        @ApiResponse(responseCode = "500", description = "Internal server error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping("/search")
-    public ResponseEntity<IdentitySearchResponse> advancedSearch(@Valid @RequestBody IdentitySearchRequest request) {
-        // TODO: Implement actual advanced search logic
-        IdentitySearchResponse response = new IdentitySearchResponse(
-            List.of(), // content
-            request.getPage(),
-            request.getSize(),
-            0L, // totalElements
-            0, // totalPages
-            true, // first
-            true // last
-        );
-        
-        return ResponseEntity.ok(response);
-    }
 }

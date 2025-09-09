@@ -16,9 +16,22 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     
+    private boolean isSpringDocPath(String path) {
+        return path != null && (path.contains("/v3/api-docs") || 
+                               path.contains("/swagger-ui") || 
+                               path.contains("/swagger-resources") ||
+                               path.contains("/webjars") ||
+                               path.contains("/api-docs"));
+    }
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
+        
+        String path = request.getDescription(false).replace("uri=", "");
+        if (isSpringDocPath(path)) {
+            return null; // Let SpringDoc handle its own errors
+        }
         
         Map<String, Object> details = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
@@ -39,9 +52,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(errorResponse);
     }
     
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
-            IllegalArgumentException ex, WebRequest request) {
+    
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<ErrorResponse> handleSpecificExceptions(
+            Exception ex, WebRequest request) {
+        
+        String path = request.getDescription(false).replace("uri=", "");
+        if (isSpringDocPath(path)) {
+            return null; // Let SpringDoc handle its own errors
+        }
         
         ErrorResponse errorResponse = new ErrorResponse(
             "INVALID_ARGUMENT",
@@ -53,21 +72,5 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.badRequest().body(errorResponse);
-    }
-    
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
-            Exception ex, WebRequest request) {
-        
-        ErrorResponse errorResponse = new ErrorResponse(
-            "INTERNAL_ERROR",
-            "An unexpected error occurred",
-            OffsetDateTime.now(),
-            request.getDescription(false).replace("uri=", ""),
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            null
-        );
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }
